@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Year 8 Numeracy Check</title>
+<style>
+  :root {
+    --ink: #1d2433; --muted: #5b6475; --line: #d9dee7; --bg: #f5f7fa; --card: #ffffff;
+    --accent: #1f5fbf; --accent-ink: #ffffff; --good: #1d7a46; --warn: #a15c00;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 18px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 760px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+  .bar h1 { font-size: 18px; margin: 0; flex: 1; }
+  .timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--muted); }
+  .timer.low { color: var(--warn); }
+  .progress { height: 4px; background: var(--line); }
+  .progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
+  h2 { font-size: 26px; margin: 8px 0 8px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .q-num { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; }
+  .q-text { margin: 6px 0 14px; }
+  label.field { display: block; font-weight: 600; margin: 0 0 6px; }
+  input[type=text] { font: inherit; padding: 10px 12px; border: 1px solid #b8c0cc; border-radius: 8px; width: 100%; max-width: 360px; }
+  input[type=text]:focus, .opt input:focus-visible + span { outline: 3px solid #9cc0f5; outline-offset: 1px; }
+  .answer-row { display: flex; align-items: center; gap: 8px; }
+  .answer-row input { max-width: 200px; }
+  .affix { color: var(--muted); font-weight: 600; }
+  .opts { display: grid; gap: 8px; }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+  .opt:hover { background: #f0f4fb; }
+  .opt input { width: 20px; height: 20px; margin: 0; }
+  .opt.chosen { border-color: var(--accent); background: #eaf1fc; }
+  table.data { border-collapse: collapse; margin: 4px 0 14px; font-size: 16px; }
+  table.data th, table.data td { border: 1px solid #b8c0cc; padding: 6px 10px; text-align: center; }
+  table.data th { background: #eef1f6; }
+  table.map td { min-width: 84px; height: 40px; }
+  .hint { color: var(--muted); font-size: 15px; margin: 0 0 12px; }
+  .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 24px; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 12px 22px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); }
+  button.secondary { background: #e4e8ef; color: var(--ink); }
+  button:disabled { opacity: .5; cursor: default; }
+  .note { padding: 12px 14px; border-radius: 8px; background: #fff6e5; border: 1px solid #f0d49a; margin-top: 16px; }
+  .ok { color: var(--good); }
+  .err { color: #b42318; font-size: 15px; margin-top: 6px; }
+  .hidden { display: none !important; }
+  @media (max-width: 520px) { html, body { font-size: 17px; } .card { padding: 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 id="title">Year 8 Numeracy Check</h1>
+    <div class="timer hidden" id="timer" aria-live="off"></div>
+  </div>
+  <div class="progress"><span id="progress"></span></div>
+</header>
+
+<main>
+  <!-- Start -->
+  <section id="screen-start">
+    <h2>Before you start</h2>
+    <p class="lead">This check has two parts and takes about 30 minutes. Every question is multiple choice: choose the best answer. The questions get harder as you go. If you are not sure, make your best choice and move on. You may use a basic calculator and scrap paper.</p>
+    <div class="card">
+      <label class="field" for="s-name">Your full name</label>
+      <input type="text" id="s-name" autocomplete="name">
+      <div style="height:14px"></div>
+      <label class="field" for="s-id">Student ID</label>
+      <input type="text" id="s-id" autocomplete="off">
+      <div style="height:14px"></div>
+      <label class="field" for="s-class">Maths class</label>
+      <input type="text" id="s-class" autocomplete="off">
+      <div class="err hidden" id="start-err">Please fill in your name and student ID.</div>
+    </div>
+    <div class="note hidden" id="resume-note">
+      You have a check in progress on this device. <button class="secondary" id="btn-resume" type="button">Carry on where I left off</button>
+    </div>
+    <div class="actions"><button class="primary" id="btn-start" type="button">Start Part 1</button></div>
+  </section>
+
+  <!-- Questions -->
+  <section id="screen-stage" class="hidden">
+    <h2 id="stage-title">Part 1</h2>
+    <p class="lead" id="stage-lead"></p>
+    <div id="questions"></div>
+    <div class="note hidden" id="blank-note"></div>
+    <div class="actions"><button class="primary" id="btn-next" type="button">Finish Part 1</button></div>
+  </section>
+
+  <!-- Done -->
+  <section id="screen-done" class="hidden">
+    <h2>All done</h2>
+    <p class="lead" id="done-msg">Sending your answers…</p>
+    <div class="actions">
+      <button class="secondary hidden" id="btn-retry" type="button">Try sending again</button>
+      <button class="secondary hidden" id="btn-download" type="button">Download my answers</button>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===================== SETTINGS: edit these ===================== */
+var CONFIG = {
+  // Paste the HTTP POST URL from your Power Automate flow's trigger, between the quotes.
+  FLOW_URL: "https://defaulte08016f9d1fd4cbb83b0b76eb43616.27.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/08/workflows/459417ab206247b79e5cd1b6bcaeeb70/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=UMmO4frUuk_RgzXJ12Q87F2vLV1vBS3tJ0LIIhQ_fLA",
+  // Any word you like. Use the same word in the flow's Condition step.
+  SHARED_KEY: "koala42",
+  TIME_LIMIT_MINUTES: 30,
+  TITLE: "Year 8 Numeracy Check"
+};
+/* ================================================================ */
+</script>
+
+<script>
+/* ============================================================
+   Year 8 Numeracy Screener: item bank, routing and scoring
+   ============================================================ */
+
+// Levels used throughout
+var NAPLAN_LEVELS = ["Needs additional support", "Developing", "Strong", "Exceeding"];
+
+var CANTEEN_TABLE =
+  '<table class="data"><tr><th>Day</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>' +
+  '<tr><th>Sales</th><td>42</td><td>37</td><td>55</td><td>48</td><td>51</td></tr></table>';
+
+var MAP_TABLE =
+  '<table class="data map"><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>' +
+  '<tr><th>1</th><td>Car park</td><td>Library</td><td></td><td>Oval</td></tr>' +
+  '<tr><th>2</th><td>Office</td><td></td><td>Canteen</td><td></td></tr>' +
+  '<tr><th>3</th><td>Gym</td><td>Hall</td><td></td><td>Gate</td></tr></table>' +
+  '<p class="hint">North is at the top.</p>';
+
+/* Item fields (every item is multiple choice, like OLNA)
+   group   F = foundation (ACSF L1), N = Year 7 Needs additional support (ACSF L2),
+           D = Year 7 Developing, S = Year 7 Strong (ACSF L3 standard), E = Year 7 Exceeding
+   acsf    closest ACSF numeracy indicator, "none" or "above L3"
+   answer  the exact text of the correct option
+   html    optional table shown with the question                                        */
+var ITEMS = {
+  // ---------- Stage 1 core: 4 Developing + 8 Strong ----------
+  C01: { group: "D", acsf: "3.10", answer: "75%", options: ["34%", "43%", "75%", "0.75%"], text: "What is 3/4 written as a percentage?" },
+  C02: { group: "D", acsf: "3.10", answer: "2 500 g", options: ["25 g", "250 g", "2 500 g", "25 000 g"], text: "How many grams are in 2.5 kg?" },
+  C03: { group: "D", acsf: "3.09", answer: "2:35 pm", options: ["2:35 am", "2:35 pm", "12:35 pm", "4:35 pm"], text: "Which 12-hour time is the same as 14:35?" },
+  C04: { group: "D", acsf: "3.10", answer: "$9.05", options: ["$4.25", "$7.20", "$9.05", "$12.75"],
+         text: "Sam buys 3 notebooks at $2.40 each and a pen for $1.85. What is the total cost?" },
+  C05: { group: "S", acsf: "3.10", answer: "4 400", options: ["4 000", "4 300", "4 390", "4 400"], text: "What is 4 386 rounded to the nearest hundred?" },
+  C06: { group: "S", acsf: "3.10", answer: "$12", options: ["$8", "$12", "$15", "$68"], text: "What is 15% of $80?" },
+  C07: { group: "S", acsf: "3.10", answer: "2", options: ["2", "10", "38", "102"], text: "What is 20 − 3 × (4 + 2)?" },
+  C08: { group: "S", acsf: "3.10", answer: "5 cups", options: ["4 cups", "5 cups", "6 cups", "11 cups"],
+         text: "A recipe uses 3 cups of flour to make 12 muffins. How many cups of flour are needed for 20 muffins?" },
+  C09: { group: "S", acsf: "3.10", answer: "30 m²", options: ["11.5 m²", "15 m²", "23 m²", "30 m²"],
+         text: "A rectangular garden bed is 7.5 m long and 4 m wide. What is its area?" },
+  C10: { group: "S", acsf: "3.09", answer: "16:35", options: ["15:35", "16:35", "16:95", "4:35"],
+         text: "A train leaves at 13:45. The trip takes 2 hours 50 minutes. What time does it arrive (24-hour time)?" },
+  C11: { group: "S", acsf: "3.10", answer: "17 km", options: ["8.4 km", "15 km", "17 km", "34 km"],
+         text: "On a map, 1 cm stands for 5 km. Two towns are 3.4 cm apart on the map. How far apart are they in real life?" },
+  C12: { group: "S", acsf: "3.10", answer: "40%", options: ["20%", "25%", "40%", "60%"],
+         text: "A spinner has 5 equal sections. 2 of them are green. What is the probability of landing on green?" },
+
+  // ---------- Foundation: ACSF Level 1 ----------
+  F01: { group: "F", acsf: "1.10", answer: "283", options: ["13", "273", "283", "293"],
+         text: "Year 8 has 148 students and Year 7 has 135 students. How many students is that altogether?" },
+  F02: { group: "F", acsf: "1.10", answer: "$12", options: ["$8", "$12", "$13", "$28"],
+         text: "You buy a drink for $3 and a pie for $5. You pay with a $20 note. How much change do you get?" },
+  F03: { group: "F", acsf: "1.10", answer: "45", options: ["30", "40", "45", "180"], text: "What is half of 90?" },
+  F04: { group: "F", acsf: "1.10", answer: "1 metre", options: ["1 metre", "80 centimetres", "They are the same length", "You cannot tell"],
+         text: "Which is longer: 1 metre or 80 centimetres?" },
+  F05: { group: "F", acsf: "1.11", answer: "March", options: ["January", "February", "March", "December"],
+         text: "A note is dated 14/3/26. Which month is that?" },
+  F06: { group: "F", acsf: "1.10", answer: "Wednesday", options: ["Monday", "Wednesday", "Thursday", "Friday"],
+         html: CANTEEN_TABLE, text: "This table shows canteen sales for one week. Which day had the most sales?" },
+
+  // ---------- Year 7 Needs additional support: ACSF Level 2 ----------
+  N01: { group: "N", acsf: "2.09", answer: "4 512, 40 512, 45 021, 45 102",
+         options: ["4 512, 40 512, 45 021, 45 102", "4 512, 40 512, 45 102, 45 021",
+                   "40 512, 4 512, 45 021, 45 102", "45 102, 45 021, 40 512, 4 512"],
+         text: "Which list is in order from smallest to largest?" },
+  N02: { group: "N", acsf: "2.10", answer: "15", options: ["15", "20", "56", "240"], text: "What is 1/4 of 60?" },
+  N03: { group: "N", acsf: "2.10", answer: "144", options: ["30", "124", "144", "164"],
+         text: "There are 6 boxes with 24 pencils in each box. How many pencils are there?" },
+  N04: { group: "N", acsf: "2.11", answer: "50 − 18", options: ["50 + 18", "50 − 18", "50 × 18", "18 − 50"],
+         text: "Mia has $50 and spends $18. Which number sentence shows how much she has left?" },
+  N05: { group: "N", acsf: "2.09", answer: "28 minutes", options: ["28 minutes", "32 minutes", "38 minutes", "68 minutes"],
+         text: "A bus leaves at 8:47 am and arrives at 9:15 am. How long is the trip?" },
+  N06: { group: "N", acsf: "2.10", answer: "Canteen", options: ["Office", "Library", "Canteen", "Hall"],
+         html: MAP_TABLE, text: "Use the school map. What is in square C2?" },
+
+  // ---------- Extra Year 7 Developing ----------
+  D01: { group: "D", acsf: "2.09", answer: "1/5", options: ["1/5", "1/8", "1/10", "1/12"], text: "Which fraction is the largest?" },
+  D02: { group: "D", acsf: "none", answer: "6.3", options: ["5.7", "6.2", "6.3", "6.6"], text: "What comes next in the pattern 3.5, 4.2, 4.9, 5.6, …?" },
+  D03: { group: "D", acsf: "none", answer: "9", options: ["8", "9", "48", "60"], text: "What is the missing number? ? × 6 = 54" },
+  D04: { group: "D", acsf: "3.10", answer: "35°", options: ["35°", "90°", "120°", "180°"], text: "Which of these angles is acute?" },
+
+  // ---------- Extra Year 7 Strong: ACSF Level 3 (decision items) ----------
+  S01: { group: "S", acsf: "3.10", answer: "8 000", options: ["7 000", "7 600", "7 650", "8 000"], text: "What is 7 649 rounded to the nearest thousand?" },
+  S02: { group: "S", acsf: "3.10", answer: "$49.50", options: ["$40.50", "$45.10", "$49.50", "$55.00"],
+         text: "A $45 phone bill goes up by 10%. What is the new bill?" },
+  S03: { group: "S", acsf: "3.10", answer: "9", options: ["1.5", "4", "9", "21"], text: "What is (18 − 6) ÷ 3 + 5?" },
+  S04: { group: "S", acsf: "3.10", answer: "7 L", options: ["6 L", "7 L", "10.5 L", "18 L"],
+         text: "4 L of paint covers 24 m² of wall. How much paint is needed for 42 m²?" },
+  S05: { group: "S", acsf: "3.10", answer: "$9.50", options: ["$6.30", "$7.60", "$9.50", "$95.00"],
+         text: "Bananas cost $3.80 per kilogram. How much do 2.5 kg of bananas cost?" },
+  S06: { group: "S", acsf: "3.10", answer: "26 m", options: ["13 m", "19.5 m", "26 m", "42.25 m"],
+         text: "A square courtyard has sides of 6.5 m. What is its perimeter?" },
+  S07: { group: "S", acsf: "3.10", answer: "180 cm", options: ["0.18 cm", "18 cm", "180 cm", "1 800 cm"], text: "How many centimetres are in 1.8 m?" },
+  S08: { group: "S", acsf: "3.09", answer: "9:35 pm", options: ["8:35 pm", "9:35 pm", "9:35 am", "21:35 pm"],
+         text: "A movie starts at 19:20 and runs for 2 hours 15 minutes. What time does it finish?" },
+  S09: { group: "S", acsf: "3.10", answer: "0.6", options: ["0.4", "0.6", "1.5", "6"],
+         text: "A bag holds 4 red counters and 6 blue counters. What is the probability of taking a blue counter, as a decimal?" },
+  S10: { group: "S", acsf: "3.09", answer: "7", options: ["3", "4", "7", "8"],
+         text: "Ten students scored 6, 7, 7, 8, 8, 8, 9, 9, 10 and 10 on a quiz. How many students scored 8 or more?" },
+
+  // ---------- Year 7 Exceeding ----------
+  E01: { group: "E", acsf: "3.10", answer: "$78", options: ["$42", "$78", "$85", "$155"],
+         text: "A jacket costs $120. It is on sale with a 35% discount. What is the sale price?" },
+  E02: { group: "E", acsf: "above L3", answer: "2 × 2 × 3 × 5",
+         options: ["2 × 30", "2 × 2 × 15", "2 × 2 × 3 × 5", "4 × 3 × 5"],
+         text: "Which shows 60 as a product of prime factors?" },
+  E03: { group: "E", acsf: "above L3", answer: "27 cm²", options: ["15 cm²", "27 cm²", "30 cm²", "54 cm²"],
+         text: "A triangle has a base of 9 cm and a height of 6 cm. What is its area?" },
+  E04: { group: "E", acsf: "above L3", answer: "52°", options: ["38°", "52°", "62°", "232°"],
+         text: "Two angles sit on a straight line. One angle is 128°. What is the other angle?" },
+  E05: { group: "E", acsf: "3.10", answer: "22.1 L", options: ["6.5 L", "22.1 L", "52.3 L", "221 L"],
+         text: "A car uses 6.5 L of fuel for every 100 km. How much fuel does it use for a 340 km trip?" },
+  E06: { group: "E", acsf: "above L3", answer: "108", options: ["36", "54", "108", "168"],
+         text: "In a survey of 50 Year 8 students, 18 said they walk to school. The school has 300 Year 8 students. About how many of them would you predict walk to school?" }
+};
+
+// Every item id in a fixed order (used for results columns)
+var ITEM_IDS = Object.keys(ITEMS);
+
+var STAGE1 = ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12"];
+
+var ROUTES = {
+  Low:    ["F01", "F02", "F03", "F04", "F05", "F06", "N01", "N02", "N03", "N04", "N05", "N06", "D01", "D02", "D03", "D04"],
+  Middle: ["D01", "D02", "D03", "D04", "S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"],
+  High:   ["S02", "S04", "S08", "S09", "E01", "E02", "E03", "E04", "E05", "E06"]
+};
+
+// Cut points: adjust after calibrating against students with known Year 9 outcomes
+var CUTS = {
+  routeLowMax: 5,      // Stage 1 score 0-5 -> Low route
+  routeMiddleMax: 9,   // 6-9 -> Middle route; 10-12 -> High route
+  foundationPass: 5,   // of 6
+  nasPass: 5,          // of 6
+  developingPass: 0.75,
+  strongOnTrack: 0.75, // share of Level 3 items correct for "On track"
+  strongClose: 0.60,   // share for "At risk (close)"
+  exceedingPass: 5     // of 6
+};
+
+/* ---------- Marking (every item is multiple choice) ---------- */
+function markItem(id, response) {
+  return response !== undefined && response !== null && response === ITEMS[id].answer ? 1 : 0;
+}
+
+/* Same option order for a given student, different between students */
+function seededShuffle(list, seedText) {
+  var h = 2166136261;
+  for (var i = 0; i < seedText.length; i++) { h ^= seedText.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  var a = list.slice();
+  for (var j = a.length - 1; j > 0; j--) {
+    h = (Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) ^ (h >>> 13); h = h >>> 0;
+    var k = h % (j + 1); var t = a[j]; a[j] = a[k]; a[k] = t;
+  }
+  return a;
+}
+
+function routeFor(stage1Score) {
+  if (stage1Score <= CUTS.routeLowMax) return "Low";
+  if (stage1Score <= CUTS.routeMiddleMax) return "Middle";
+  return "High";
+}
+
+function tally(ids, marks, group) {
+  var right = 0, total = 0;
+  ids.forEach(function (id) {
+    if (ITEMS[id].group === group) { total++; right += marks[id] || 0; }
+  });
+  return { right: right, total: total };
+}
+
+/* responses: { itemId: answer } for every item the student was shown */
+function scoreAttempt(responses, route) {
+  var shown = STAGE1.concat(ROUTES[route]);
+  var marks = {};
+  shown.forEach(function (id) { marks[id] = markItem(id, responses[id]); });
+
+  var stage1 = STAGE1.reduce(function (a, id) { return a + marks[id]; }, 0);
+  var F = tally(shown, marks, "F"), N = tally(shown, marks, "N"), D = tally(shown, marks, "D"),
+      S = tally(shown, marks, "S"), E = tally(shown, marks, "E");
+  var devPct = D.total ? D.right / D.total : null;
+  var strongPct = S.total ? S.right / S.total : null;
+
+  // OLNA risk and indicative ACSF level
+  var acsf, risk;
+  if (route === "Low") {
+    if (F.right < CUTS.foundationPass) { acsf = "Below Level 1"; risk = "High"; }
+    else if (N.right < CUTS.nasPass) { acsf = "Level 1"; risk = "High"; }
+    else { acsf = "Level 2"; risk = "At risk"; }
+  } else {
+    if (strongPct >= CUTS.strongOnTrack) { acsf = "Level 3"; risk = "On track"; }
+    else if (strongPct >= CUTS.strongClose) { acsf = "Level 2 to 3"; risk = "At risk (close)"; }
+    else { acsf = "Level 2"; risk = "At risk"; }
+  }
+
+  // Year 7 NAPLAN level the screener indicates
+  var naplan;
+  if (devPct === null || devPct < CUTS.developingPass) naplan = NAPLAN_LEVELS[0];
+  else if (strongPct === null || strongPct < CUTS.strongOnTrack) naplan = NAPLAN_LEVELS[1];
+  else if (route === "High" && E.right >= CUTS.exceedingPass) naplan = NAPLAN_LEVELS[3];
+  else naplan = NAPLAN_LEVELS[2];
+
+  // Flags for the teacher
+  var flags = [];
+  var coreDev = tally(STAGE1, marks, "D"), coreStrong = tally(STAGE1, marks, "S");
+  if (coreStrong.right > coreDev.right + 4) flags.push("Uneven: more Strong than Developing items right in Stage 1");
+  if (route === "Low" && F.right >= CUTS.foundationPass && N.right < CUTS.nasPass) flags.push("Check Level 2 gaps");
+  var blanks = shown.filter(function (id) {
+    return responses[id] === undefined || responses[id] === null || String(responses[id]).trim() === "";
+  }).length;
+  if (blanks >= 6) flags.push(blanks + " questions left blank");
+
+  return {
+    route: route,
+    stage1: stage1,
+    foundation: route === "Low" ? F.right : null,
+    nas: route === "Low" ? N.right : null,
+    developingPct: devPct,
+    strongPct: strongPct,
+    exceeding: route === "High" ? E.right : null,
+    acsfLevel: acsf,
+    olnaRisk: risk,
+    naplanLevel: naplan,
+    flags: flags.join("; "),
+    marks: marks
+  };
+}
+
+/* ---------- Results row for the Excel table ---------- */
+var SUMMARY_COLUMNS = [
+  "Submission ID", "Submitted", "Student ID", "Name", "Class", "Route",
+  "Part 1 score (/12)", "Level 1 items (/6)", "NAS items (/6)", "Developing %", "Strong / Level 3 %",
+  "Exceeding items (/6)", "Indicative ACSF level", "OLNA risk", "Screener NAPLAN level",
+  "Year 7 NAPLAN (from Roster)", "Check vs Year 7", "Suggested action", "Minutes taken", "Flags"
+];
+var FORMULA_COLUMNS = ["Year 7 NAPLAN (from Roster)", "Check vs Year 7", "Suggested action"];
+var RESULT_COLUMNS = SUMMARY_COLUMNS.concat(ITEM_IDS).concat(["Answers"]);
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+function localStamp(d) {
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+}
+
+function buildRow(info, r, responses) {
+  var blank = function (v) { return v === null || v === undefined ? "" : v; };
+  var row = {
+    "Submission ID": info.submissionId, "Submitted": localStamp(info.submittedAt),
+    "Student ID": info.studentId, "Name": info.name, "Class": info.cls, "Route": r.route,
+    "Part 1 score (/12)": r.stage1, "Level 1 items (/6)": blank(r.foundation), "NAS items (/6)": blank(r.nas),
+    "Developing %": blank(r.developingPct), "Strong / Level 3 %": blank(r.strongPct),
+    "Exceeding items (/6)": blank(r.exceeding), "Indicative ACSF level": r.acsfLevel, "OLNA risk": r.olnaRisk,
+    "Screener NAPLAN level": r.naplanLevel, "Minutes taken": info.minutes, "Flags": r.flags,
+    "Answers": JSON.stringify(responses)
+  };
+  ITEM_IDS.forEach(function (id) { row[id] = Object.prototype.hasOwnProperty.call(r.marks, id) ? r.marks[id] : ""; });
+  return row;
+}
+
+</script>
+
+<script>
+(function () {
+  var STORE_KEY = "y8-numeracy-check-v1";
+  var state = { student: null, stage: 0, route: null, responses: {}, startedAt: null, submitted: false, row: null, submissionId: null };
+  var timerHandle = null;
+
+  function $(id) { return document.getElementById(id); }
+  function show(id) { ["screen-start", "screen-stage", "screen-done"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); }); window.scrollTo(0, 0); }
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+  function load() { try { var s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function clearStore() { try { localStorage.removeItem(STORE_KEY); } catch (e) {} }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  document.title = CONFIG.TITLE;
+  $("title").textContent = CONFIG.TITLE;
+
+  /* ---------- timer ---------- */
+  function startTimer() {
+    $("timer").classList.remove("hidden");
+    clearInterval(timerHandle);
+    timerHandle = setInterval(tick, 1000);
+    tick();
+  }
+  function tick() {
+    var left = CONFIG.TIME_LIMIT_MINUTES * 60000 - (Date.now() - state.startedAt);
+    if (left <= 0) { clearInterval(timerHandle); $("timer").textContent = "Time is up"; timeUp(); return; }
+    var m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
+    $("timer").textContent = m + ":" + (s < 10 ? "0" : "") + s + " left";
+    $("timer").classList.toggle("low", left < 5 * 60000);
+  }
+  function timeUp() {
+    if (state.submitted) return;
+    if (state.stage === 1) { collect(); state.route = routeFor(stage1Score()); }
+    else if (state.stage === 2) { collect(); }
+    finish();
+  }
+
+  /* ---------- rendering ---------- */
+  function currentIds() { return state.stage === 1 ? STAGE1 : ROUTES[state.route]; }
+
+  function renderStage() {
+    var ids = currentIds();
+    $("stage-title").textContent = state.stage === 1 ? "Part 1" : "Part 2";
+    $("stage-lead").textContent = state.stage === 1
+      ? "Choose one answer for each question."
+      : "Well done on Part 1. Here are your Part 2 questions.";
+    $("btn-next").textContent = state.stage === 1 ? "Finish Part 1" : "Finish and send";
+    $("blank-note").classList.add("hidden");
+    $("blank-note").dataset.warned = "";
+    var offset = state.stage === 1 ? 0 : STAGE1.length;
+    var html = ids.map(function (id, j) {
+      var i = j + offset;
+      var it = ITEMS[id], saved = state.responses[id] || "";
+      var opts = seededShuffle(it.options, state.student.id + "|" + id);
+      var body = '<div class="opts" role="radiogroup" aria-label="Question ' + (i + 1) + ' options">' + opts.map(function (o) {
+        var chosen = saved === o;
+        return '<label class="opt' + (chosen ? " chosen" : "") + '"><input type="radio" name="' + id + '" value="' + esc(o) + '"' + (chosen ? " checked" : "") + '><span>' + esc(o) + '</span></label>';
+      }).join("") + "</div>";
+      return '<div class="card"><div class="q-num">Question ' + (i + 1) + '</div><div class="q-text">' + esc(it.text) + "</div>" + (it.html || "") + body + "</div>";
+    }).join("");
+    $("questions").innerHTML = html;
+    Array.prototype.forEach.call($("questions").querySelectorAll("input"), function (el) {
+      el.addEventListener("change", function () {
+        Array.prototype.forEach.call(document.getElementsByName(el.name), function (r) { r.parentNode.classList.toggle("chosen", r.checked); });
+        collect(); save(); updateProgress();
+      });
+    });
+    updateProgress();
+  }
+
+  function collect() {
+    currentIds().forEach(function (id) {
+      var els = document.getElementsByName(id);
+      if (!els.length) return;
+      var v = ""; Array.prototype.forEach.call(els, function (r) { if (r.checked) v = r.value; });
+      state.responses[id] = v;
+    });
+  }
+
+  function updateProgress() {
+    var total = STAGE1.length + (state.route ? ROUTES[state.route].length : 16);
+    var done = Object.keys(state.responses).filter(function (k) { return state.responses[k] !== ""; }).length;
+    $("progress").style.width = Math.min(100, Math.round(done / total * 100)) + "%";
+  }
+
+  function stage1Score() { return STAGE1.reduce(function (a, id) { return a + markItem(id, state.responses[id]); }, 0); }
+
+  /* ---------- flow ---------- */
+  $("btn-start").addEventListener("click", function () {
+    var name = $("s-name").value.trim(), sid = $("s-id").value.trim(), cls = $("s-class").value.trim();
+    if (!name || !sid) { $("start-err").classList.remove("hidden"); return; }
+    state = { student: { name: name, id: sid, cls: cls }, stage: 1, route: null, responses: {}, startedAt: Date.now(), submitted: false, row: null,
+              submissionId: sid.replace(/[^\w-]/g, "") + "-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e6).toString(36) };
+    save(); renderStage(); show("screen-stage"); startTimer();
+  });
+
+  $("btn-next").addEventListener("click", function () {
+    collect();
+    var blanks = currentIds().filter(function (id) { return !state.responses[id]; }).length;
+    var note = $("blank-note");
+    if (blanks > 0 && !note.dataset.warned) {
+      note.textContent = "You have left " + blanks + (blanks === 1 ? " question" : " questions") + " blank. That is fine if you cannot do them. Press the button again to carry on.";
+      note.classList.remove("hidden"); note.dataset.warned = "1"; return;
+    }
+    if (state.stage === 1) {
+      state.route = routeFor(stage1Score());
+      state.stage = 2; save(); renderStage(); window.scrollTo(0, 0);
+    } else { finish(); }
+  });
+
+  function finish() {
+    if (state.submitted) return;
+    clearInterval(timerHandle);
+    var route = state.route || "Low";
+    var r = scoreAttempt(state.responses, route);
+    state.row = buildRow({
+      submissionId: state.submissionId, submittedAt: new Date(), studentId: state.student.id,
+      name: state.student.name, cls: state.student.cls,
+      minutes: Math.round((Date.now() - state.startedAt) / 6000) / 10
+    }, r, state.responses);
+    state.submitted = true; state.stage = 3; save();
+    $("timer").classList.add("hidden");
+    show("screen-done"); send();
+  }
+
+  function sent() {
+    $("done-msg").innerHTML = '<span class="ok">Your answers have been sent.</span> Thank you. You can close this page now.';
+    $("btn-retry").classList.add("hidden"); $("btn-download").classList.add("hidden");
+    clearStore();
+  }
+  function failed(msg) {
+    $("done-msg").textContent = msg + " Tell your teacher, then try again or download your answers to give to them.";
+    $("btn-retry").classList.remove("hidden"); $("btn-download").classList.remove("hidden");
+  }
+
+  function send() {
+    $("done-msg").textContent = "Sending your answers…";
+    $("btn-retry").disabled = true;
+    if (!CONFIG.FLOW_URL) { $("btn-retry").disabled = false; failed("This check is not connected to a results sheet yet."); return; }
+    fetch(CONFIG.FLOW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: CONFIG.SHARED_KEY, row: state.row })
+    }).then(function (res) {
+      $("btn-retry").disabled = false;
+      if (res.ok) { sent(); } else { failed("Your answers could not be saved (error " + res.status + ")."); }
+    }).catch(function () {
+      $("btn-retry").disabled = false;
+      failed("Your answers could not be sent. Check your internet connection.");
+    });
+  }
+
+  $("btn-retry").addEventListener("click", send);
+  $("btn-download").addEventListener("click", function () {
+    try {
+      var blob = new Blob([JSON.stringify({ row: state.row }, null, 2)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "numeracy-check-" + (state.student.id || "answers").replace(/[^\w-]/g, "") + ".json";
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) { failed("Download is not available here."); }
+  });
+
+  $("btn-resume").addEventListener("click", function () {
+    var saved = load(); if (!saved) return;
+    state = saved;
+    if (state.stage === 3 && state.row) { show("screen-done"); send(); return; }
+    renderStage(); show("screen-stage"); startTimer();
+  });
+
+  // Offer to resume an unfinished check on this device
+  var prior = load();
+  if (prior && prior.student && (prior.stage === 1 || prior.stage === 2 || (prior.stage === 3 && prior.row))) {
+    $("resume-note").classList.remove("hidden");
+  }
+})();
+</script>
+</body>
+</html>
