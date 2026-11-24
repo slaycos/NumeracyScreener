@@ -3,103 +3,295 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Year 8 Numeracy Check</title>
+<title>Numeracy Screener</title>
 <style>
+  /* Duncraig SHS Brand and Style Guide 2021:
+     brand blue R35 G46 B131 for headings, supported by white;
+     body text Calibri (Arial if Calibri is missing); headings Tahoma in capitals.
+     The guide's accent colours are "not for general use", so every tone below is built from the brand blue.
+     Red appears only for errors.
+     Layout follows Material 3: tonal surfaces built from the primary colour, rounded shapes,
+     pill-shaped buttons with sentence-case labels, low elevation. */
   :root {
-    --ink: #1d2433; --muted: #5b6475; --line: #d9dee7; --bg: #f5f7fa; --card: #ffffff;
-    --accent: #1f5fbf; --accent-ink: #ffffff; --good: #1d7a46; --warn: #a15c00;
+    --primary: #232E83; --on-primary: #FFFFFF;
+    --primary-container: #DFE0FF; --on-primary-container: #111A63;
+    --secondary-container: #E2E1F7; --on-secondary-container: #1A1B2E;
+    --surface: #FBF8FF; --surface-lowest: #FFFFFF; --surface-low: #F5F2FA; --surface-container: #EFEDF5; --surface-high: #E9E7F0;
+    --on-surface: #1B1B21; --on-surface-variant: #46464F; --outline: #777680; --outline-variant: #C7C5D0;
+    --error: #BA1A1A; --good: #1D7A46;
+    /* accent colours from the brand guide: decoration only, never for text */
+    --orange: #F26922; --purple: #9D248F; --yellow: #FFC40C; --sky: #81D4F7; --green: #A4CE39;
+    --sky-tint: #E4F5FD; --green-tint: #EEF6DB; --yellow-tint: #FFF4CC; --orange-tint: #FDE8DC;
+    --shape-xs: 4px; --shape-s: 8px; --shape-m: 12px; --shape-l: 16px; --shape-full: 999px;
+    --elev-1: 0 1px 2px rgba(0, 0, 0, .3), 0 1px 3px 1px rgba(0, 0, 0, .15);
+    --elev-2: 0 1px 2px rgba(0, 0, 0, .3), 0 2px 6px 2px rgba(0, 0, 0, .15);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 18px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
-  header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
-  .bar { max-width: 760px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
-  .bar h1 { font-size: 18px; margin: 0; flex: 1; }
-  .timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--muted); }
-  .timer.low { color: var(--warn); }
-  .progress { height: 4px; background: var(--line); }
-  .progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
-  h2 { font-size: 26px; margin: 8px 0 8px; }
-  .lead { color: var(--muted); margin: 0 0 24px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-  .q-num { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; }
-  .q-text { margin: 6px 0 14px; }
-  label.field { display: block; font-weight: 600; margin: 0 0 6px; }
-  input[type=text] { font: inherit; padding: 10px 12px; border: 1px solid #b8c0cc; border-radius: 8px; width: 100%; max-width: 360px; }
-  input[type=text]:focus, .opt input:focus-visible + span { outline: 3px solid #9cc0f5; outline-offset: 1px; }
-  .answer-row { display: flex; align-items: center; gap: 8px; }
-  .answer-row input { max-width: 200px; }
-  .affix { color: var(--muted); font-weight: 600; }
+  html, body { margin: 0; background: var(--surface); color: var(--on-surface);
+    font: 19px/1.5 Calibri, Carlito, Arial, sans-serif; }
+  h1, h2 { font-family: Tahoma, Verdana, Arial, sans-serif; text-transform: uppercase; color: var(--primary); letter-spacing: .02em; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--surface-container); }
+  .bar { max-width: 760px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 16px; }
+  .bar h1 { font-size: 16px; margin: 0; flex: 1; }
+  .who { color: var(--on-surface-variant); font-size: 16px; }
+  .progress { height: 4px; background: var(--primary-container); margin: 0 20px 8px; border-radius: var(--shape-full); max-width: 720px; }
+  @media (min-width: 761px) { .progress { margin: 0 auto 8px; } }
+  .progress span { display: block; height: 100%; width: 0; background: var(--primary); border-radius: var(--shape-full); transition: width .3s; }
+  .brand { background: var(--surface-lowest); border-bottom: 1px solid var(--outline-variant); }
+  .brand-inner { max-width: 760px; margin: 0 auto; padding: 22px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand img { display: block; width: 280px; height: auto; }   /* 280px keeps the logo above the guide's minimum size */
+  main { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+  h2 { font-size: 24px; margin: 4px 0 10px; }
+  .lead { color: var(--on-surface-variant); margin: 0 0 24px; }
+  .card { background: var(--surface-low); border-radius: var(--shape-l); padding: 24px; margin-bottom: 20px; }
+  .q-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .q-num { font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+           color: var(--on-primary-container); background: var(--primary-container); padding: 4px 12px; border-radius: var(--shape-s); }
+  .q-part { font-size: 15px; color: var(--on-surface-variant); }
+  .q-text { margin: 16px 0 18px; font-size: 22px; }
+  label.field { display: block; font-weight: 700; margin: 0 0 6px; font-size: 16px; color: var(--on-surface-variant); }
+  input[type=text] { font: inherit; padding: 14px 16px; border: 1px solid var(--outline); border-radius: var(--shape-xs); width: 100%; max-width: 360px; background: var(--surface-lowest); color: var(--on-surface); }
+  input[type=text]:hover { border-color: var(--on-surface); }
+  input[type=text]:focus { outline: none; border: 2px solid var(--primary); padding: 13px 15px; }
+  .opt input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 2px; }
   .opts { display: grid; gap: 8px; }
-  .opt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
-  .opt:hover { background: #f0f4fb; }
-  .opt input { width: 20px; height: 20px; margin: 0; }
-  .opt.chosen { border-color: var(--accent); background: #eaf1fc; }
-  table.data { border-collapse: collapse; margin: 4px 0 14px; font-size: 16px; }
-  table.data th, table.data td { border: 1px solid #b8c0cc; padding: 6px 10px; text-align: center; }
-  table.data th { background: #eef1f6; }
+  .opt { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: var(--shape-m); cursor: pointer;
+         background: var(--surface-lowest); border: 1px solid var(--outline-variant); transition: background .15s, border-color .15s; }
+  .opt:hover { background: var(--surface-high); }
+  .opt input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--primary); }
+  .opt.chosen { background: var(--primary-container); border-color: var(--primary-container); color: var(--on-primary-container); font-weight: 700; }
+  table.data { border-collapse: separate; border-spacing: 0; margin: 0 0 16px; font-size: 17px; border: 1px solid var(--outline-variant); border-radius: var(--shape-m); overflow: hidden; background: var(--surface-lowest); }
+  table.data th, table.data td { border-right: 1px solid var(--outline-variant); border-bottom: 1px solid var(--outline-variant); padding: 6px 10px; text-align: center; }
+  table.data tr > :last-child { border-right: 0; }
+  table.data tr:last-child > * { border-bottom: 0; }
+  table.data th { background: var(--secondary-container); color: var(--on-secondary-container); }
   table.map td { min-width: 84px; height: 40px; }
-  .hint { color: var(--muted); font-size: 15px; margin: 0 0 12px; }
+  .hint { color: var(--on-surface-variant); font-size: 16px; margin: -8px 0 16px; }
+  .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; }
+  .dots { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+  .dot { width: 38px; height: 32px; padding: 0; border-radius: var(--shape-s); font-size: 14px; font-weight: 700; letter-spacing: 0;
+         background: transparent; color: var(--on-surface-variant); border: 1px solid var(--outline); box-shadow: none; min-height: 0; transition: none; }
+  .dot:hover { background: var(--surface-high); }
+  .dot.done { background: var(--secondary-container); color: var(--on-secondary-container); border-color: var(--secondary-container); }
+  .dot.here { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
   .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 24px; }
-  button { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 12px 22px; cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--accent-ink); }
-  button.secondary { background: #e4e8ef; color: var(--ink); }
-  button:disabled { opacity: .5; cursor: default; }
-  .note { padding: 12px 14px; border-radius: 8px; background: #fff6e5; border: 1px solid #f0d49a; margin-top: 16px; }
-  .ok { color: var(--good); }
-  .err { color: #b42318; font-size: 15px; margin-top: 6px; }
+  button { font: inherit; font-size: 17px; font-weight: 700; letter-spacing: .01em; text-transform: none;
+           border: 0; border-radius: var(--shape-full); padding: 10px 26px; min-height: 44px; cursor: pointer;
+           transition: background .15s, box-shadow .15s; }
+  button.primary { background: var(--primary); color: var(--on-primary); }
+  button.primary:hover { box-shadow: var(--elev-1); background: #2D3891; }
+  button.secondary { background: transparent; color: var(--primary); border: 1px solid var(--outline); }
+  button.secondary:hover { background: rgba(35, 46, 131, .08); }
+  button:disabled { opacity: .38; cursor: default; box-shadow: none; }
+  .note { padding: 16px 18px; border-radius: var(--shape-m); background: var(--secondary-container); color: var(--on-secondary-container); margin-top: 16px; }
+  .note button { padding: 2px 12px; min-height: 32px; margin: 6px 6px 0 0; font-size: 15px; border-radius: var(--shape-s); background: var(--surface-lowest); }
+  .preview { padding: 12px 18px; border-radius: var(--shape-m); background: var(--surface-container); color: var(--on-surface-variant); margin-bottom: 20px; font-size: 16px; }
+  .ok { color: var(--good); font-weight: 700; }
+  .err { color: var(--error); font-size: 16px; margin-top: 8px; }
+  .confirm-name { font-size: 26px; font-weight: 700; color: var(--on-surface); }
+  .confirm-class { font-size: 18px; color: var(--on-surface-variant); margin-top: 2px; }
   .hidden { display: none !important; }
-  @media (max-width: 520px) { html, body { font-size: 17px; } .card { padding: 16px; } }
+  @media (max-width: 520px) { html, body { font-size: 18px; } .card { padding: 18px; } .q-text { font-size: 20px; } .bar h1 { font-size: 14px; } }
+  /* ---------- hero banner, after the cover of the brand guide ---------- */
+  .hero { position: relative; overflow: hidden; color: #FFFFFF;
+          background: linear-gradient(135deg, #1A2266 0%, #232E83 55%, #2E3C9E 100%); }
+  .hero-inner { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 26px 20px 30px; }
+  .hero-title { font-family: Tahoma, Verdana, Arial, sans-serif; text-transform: uppercase; font-weight: 700; font-size: 26px; letter-spacing: .03em; margin: 12px 0 4px; }
+  .hero-sub { color: #D6DAF5; font-size: 17px; }
+  .stripes { display: flex; gap: 8px; align-items: center; }
+  .stripes i { display: block; height: 5px; border-radius: 3px; animation: stripeIn .7s cubic-bezier(.2, .8, .2, 1) both; }
+  .stripes i:nth-child(1) { width: 44px; background: var(--orange); }
+  .stripes i:nth-child(2) { width: 30px; background: var(--green); animation-delay: .08s; }
+  .stripes i:nth-child(3) { width: 18px; background: var(--sky); animation-delay: .16s; }
+  .tiles i { position: absolute; display: block; background: rgba(255, 255, 255, .07); border-radius: 4px; animation: drift 14s ease-in-out infinite alternate; }
+  .tiles i:nth-child(1) { width: 64px; height: 48px; right: 6%; top: 14%; }
+  .tiles i:nth-child(2) { width: 40px; height: 40px; right: 18%; top: 56%; animation-delay: -4s; }
+  .tiles i:nth-child(3) { width: 90px; height: 54px; right: 30%; top: -18px; animation-delay: -8s; background: rgba(255, 255, 255, .05); }
+  .tiles i:nth-child(4) { width: 28px; height: 6px; right: 0; bottom: 18px; background: var(--purple); border-radius: 3px 0 0 3px; animation: stripeIn .9s .3s both; }
+  .tiles i:nth-child(5) { width: 46px; height: 6px; right: 0; bottom: 6px; background: var(--yellow); border-radius: 3px 0 0 3px; animation: stripeIn .9s .4s both; }
+  @keyframes stripeIn { from { transform: scaleX(0); transform-origin: left; opacity: 0; } to { transform: scaleX(1); transform-origin: left; opacity: 1; } }
+  @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(-22px, 10px); } }
+
+  /* ---------- accents in the test ---------- */
+  .progress span { background: linear-gradient(90deg, var(--primary) 0%, var(--purple) 55%, var(--orange) 100%);
+                   background-size: 720px 100%; }
+  .card-stripes { display: flex; gap: 6px; margin: 0 0 12px; }
+  .card-stripes i { display: block; height: 4px; border-radius: 2px; }
+  .card-stripes i:nth-child(1) { width: 30px; background: var(--orange); }
+  .card-stripes i:nth-child(2) { width: 20px; background: var(--green); }
+  .card-stripes i:nth-child(3) { width: 12px; background: var(--sky); }
+  .q-num.part1 { background: var(--sky-tint); color: var(--primary); }
+  .q-num.part2 { background: var(--green-tint); color: var(--primary); }
+  .note { background: var(--yellow-tint); color: var(--on-surface); }
+
+  /* ---------- motion ---------- */
+  #q-card.enter-next { animation: inNext .28s cubic-bezier(.2, .8, .2, 1) both; }
+  #q-card.enter-back { animation: inBack .28s cubic-bezier(.2, .8, .2, 1) both; }
+  #q-card .opt { animation: fadeUp .32s cubic-bezier(.2, .8, .2, 1) both; }
+  #q-card .opt:nth-child(2) { animation-delay: .04s; }
+  #q-card .opt:nth-child(3) { animation-delay: .08s; }
+  #q-card .opt:nth-child(4) { animation-delay: .12s; }
+  .opt.chosen.just { animation: choose .22s ease-out; }
+  button, .opt { position: relative; overflow: hidden; }
+  button.primary:hover:not(:disabled) { transform: translateY(-1px); }
+  button { transition: background .15s, box-shadow .15s, transform .15s; }
+  .ripple { position: absolute; border-radius: 50%; pointer-events: none; background: currentColor; opacity: .18;
+            transform: scale(0); animation: ripple .55s ease-out forwards; }
+  @keyframes inNext { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+  @keyframes inBack { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes choose { 0% { transform: scale(1); } 40% { transform: scale(.985); } 100% { transform: scale(1); } }
+  @keyframes ripple { to { transform: scale(2.6); opacity: 0; } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+  /* ---------- between parts and finished ---------- */
+  .celebrate { position: relative; height: 64px; margin: 8px 0 14px; }
+  .celebrate i { position: absolute; bottom: 0; display: block; width: 26px; height: 26px; border-radius: 6px; opacity: 0; }
+  .play .celebrate i { animation: rise .9s cubic-bezier(.2, .8, .2, 1) forwards; }
+  .celebrate i:nth-child(1) { left: 0; background: var(--orange); --h: -22px; --r: -12deg; }
+  .celebrate i:nth-child(2) { left: 42px; background: var(--green); --h: -36px; --r: 8deg; animation-delay: .06s !important; }
+  .celebrate i:nth-child(3) { left: 84px; background: var(--sky); --h: -14px; --r: 18deg; animation-delay: .12s !important; }
+  .celebrate i:nth-child(4) { left: 126px; background: var(--yellow); --h: -30px; --r: -6deg; animation-delay: .18s !important; }
+  .celebrate i:nth-child(5) { left: 168px; background: var(--purple); --h: -20px; --r: 14deg; animation-delay: .24s !important; }
+  .celebrate i:nth-child(6) { left: 210px; background: var(--primary); --h: -34px; --r: -16deg; animation-delay: .3s !important; }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(20px) rotate(0); } 100% { opacity: 1; transform: translateY(var(--h)) rotate(var(--r)); } }
+  .tick { display: block; width: 84px; height: 84px; margin: 0 0 16px; }
+  .tick circle { fill: var(--green); transform-origin: center; transform: scale(0); }
+  .tick path { fill: none; stroke: var(--primary); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 60; stroke-dashoffset: 60; }
+  .play .tick circle { animation: grow .45s cubic-bezier(.2, .8, .2, 1.3) forwards; }
+  .play .tick path { animation: draw .45s .35s ease-out forwards; }
+  @keyframes grow { to { transform: scale(1); } }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .tick.wait circle { fill: var(--sky-tint); }
+  .tick.wait path { display: none; }
+
+  .feedback { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; align-items: start; }
+  .feedback.hidden { display: none; }
+  @media (max-width: 640px) { .feedback { grid-template-columns: 1fr; } }
+  .fb { border-radius: var(--shape-l); padding: 20px 22px 8px; background: var(--surface-low); position: relative; overflow: hidden;
+        opacity: 0; animation: fadeUp .5s cubic-bezier(.2, .8, .2, 1) forwards; }
+  .fb + .fb { animation-delay: .12s; }
+  .fb::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; }
+  .fb.celebrate-box { background: var(--green-tint); }
+  .fb.celebrate-box::before { background: var(--green); }
+  .fb.improve-box { background: var(--sky-tint); }
+  .fb.improve-box::before { background: var(--sky); }
+  .fb h3 { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; font-family: Tahoma, Verdana, Arial, sans-serif;
+           text-transform: uppercase; font-size: 17px; letter-spacing: .02em; color: var(--primary); }
+  .fb h3 svg { width: 26px; height: 26px; flex: none; }
+  .fb ul { list-style: none; margin: 0; padding: 0; }
+  .fb li { background: var(--surface-lowest); border-radius: var(--shape-m); padding: 12px 14px; margin: 0 0 12px; font-size: 16px; line-height: 1.45; }
+  .fb li b { display: block; color: var(--on-surface); margin-bottom: 2px; }
+  .fb li span { color: var(--on-surface-variant); }
+  .rules { display: flex; flex-wrap: wrap; gap: 10px; margin: -8px 0 24px; }
+  .rule { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px 8px 12px; border-radius: var(--shape-s);
+          font-weight: 700; font-size: 16px; color: var(--on-surface); }
+  .rule svg { width: 20px; height: 20px; flex: none; }
+  .rule.yes { background: var(--green-tint); }
+  .rule.yes svg { fill: var(--good); }
+  .rule.no { background: var(--orange-tint); }
+  .rule.no svg { fill: #9C3A00; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition: none !important; }
+  }
+  @media (max-width: 520px) { .hero-title { font-size: 21px; } .tiles i:nth-child(3) { display: none; } }
 </style>
 </head>
 <body>
 <header>
   <div class="bar">
-    <h1 id="title">Year 8 Numeracy Check</h1>
-    <div class="timer hidden" id="timer" aria-live="off"></div>
+    <h1 id="title">Numeracy Screener</h1>
+    <div class="who hidden" id="who"></div>
   </div>
   <div class="progress"><span id="progress"></span></div>
 </header>
 
+<div id="brand">
+  <div class="brand"><div class="brand-inner"><img src="data:image/png;base64,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" alt="Duncraig Senior High School" width="280" height="89"></div></div>
+  <div class="hero">
+    <div class="tiles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="hero-inner">
+      <div class="stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="hero-title" id="brand-title">Numeracy Screener</div>
+      <div class="hero-sub">Two parts · no time limit · one question at a time</div>
+    </div>
+  </div>
+</div>
+
 <main>
   <!-- Start -->
   <section id="screen-start">
-    <h2>Before you start</h2>
-    <p class="lead">This check has two parts and takes about 30 minutes. Every question is multiple choice: choose the best answer. The questions get harder as you go. If you are not sure, make your best choice and move on. You may use a basic calculator and scrap paper.</p>
+    <h2>Sign in</h2>
+    <p class="lead">This screener has two parts and usually takes about 30 minutes, but there is no time limit, so take the time you need. You will see one question at a time. Every question is multiple choice: choose the best answer. The questions get harder as you go. If you are not sure, make your best choice and move on.</p>
+    <div class="rules" role="note" aria-label="What you can use">
+      <span class="rule yes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10.5-10.5-4-4L4 16v4zm16.7-13.3c.4-.4.4-1 0-1.4l-2-2c-.4-.4-1-.4-1.4 0l-1.6 1.6 4 4 1-1.2z"/></svg>Scrap paper is allowed</span>
+      <span class="rule no"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 6.3 12.9L7.1 5.7A8 8 0 0 1 12 4zM4 12c0-1.8.6-3.5 1.7-4.9l11.2 11.2A8 8 0 0 1 4 12z"/></svg>No calculators</span>
+    </div>
+    <div class="preview hidden" id="preview-note">Preview mode: this page is not connected to a results workbook, so no login code is needed and answers are not saved.</div>
     <div class="card">
-      <label class="field" for="s-name">Your full name</label>
-      <input type="text" id="s-name" autocomplete="name">
+      <div class="card-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+      <label class="field" for="s-name">Your name</label>
+      <input type="text" id="s-name" autocomplete="off" spellcheck="false">
       <div style="height:14px"></div>
-      <label class="field" for="s-id">Student ID</label>
-      <input type="text" id="s-id" autocomplete="off">
-      <div style="height:14px"></div>
-      <label class="field" for="s-class">Maths class</label>
-      <input type="text" id="s-class" autocomplete="off">
-      <div class="err hidden" id="start-err">Please fill in your name and student ID.</div>
+      <label class="field" for="s-code">Login code</label>
+      <input type="text" id="s-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="for example K7P-QX3">
+      <div class="err hidden" id="start-err"></div>
     </div>
-    <div class="note hidden" id="resume-note">
-      You have a check in progress on this device. <button class="secondary" id="btn-resume" type="button">Carry on where I left off</button>
-    </div>
-    <div class="actions"><button class="primary" id="btn-start" type="button">Start Part 1</button></div>
+    <div class="actions"><button class="primary" id="btn-start" type="button">Sign in</button></div>
   </section>
 
-  <!-- Questions -->
+  <!-- Is this you? -->
+  <section id="screen-confirm" class="hidden">
+    <h2>Is this you?</h2>
+    <p class="lead">Check that the name and class below are yours before you start.</p>
+    <div class="card">
+      <div class="card-stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="confirm-name" id="c-name"></div>
+      <div class="confirm-class" id="c-class"></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btn-yes" type="button">Yes, start the screener</button>
+      <button class="secondary" id="btn-no" type="button">No, this is not me</button>
+    </div>
+  </section>
+
+  <!-- One question at a time -->
   <section id="screen-stage" class="hidden">
-    <h2 id="stage-title">Part 1</h2>
-    <p class="lead" id="stage-lead"></p>
-    <div id="questions"></div>
+    <div class="dots" id="dots" aria-label="Questions in this part"></div>
+    <div class="card" id="q-card"></div>
+    <div class="nav">
+      <button class="secondary" id="btn-back" type="button">Back</button>
+      <button class="primary" id="btn-next" type="button">Next</button>
+    </div>
     <div class="note hidden" id="blank-note"></div>
-    <div class="actions"><button class="primary" id="btn-next" type="button">Finish Part 1</button></div>
+  </section>
+
+  <!-- Between parts -->
+  <section id="screen-break" class="hidden">
+    <div class="celebrate" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <h2>Part 1 done</h2>
+    <p class="lead">Well done. Part 2 has some new questions. Take a breath, then start when you are ready.</p>
+    <div class="actions"><button class="primary" id="btn-part2" type="button">Start Part 2</button></div>
   </section>
 
   <!-- Done -->
   <section id="screen-done" class="hidden">
+    <svg class="tick wait" id="done-tick" viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="40"/><path d="M24 43 L37 56 L61 30"/></svg>
     <h2>All done</h2>
     <p class="lead" id="done-msg">Sending your answers…</p>
     <div class="actions">
       <button class="secondary hidden" id="btn-retry" type="button">Try sending again</button>
       <button class="secondary hidden" id="btn-download" type="button">Download my answers</button>
+    </div>
+    <div class="feedback hidden" id="feedback" aria-live="polite">
+      <div class="fb celebrate-box">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#232E83" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>Things to celebrate</h3>
+        <ul id="fb-celebrate"></ul>
+      </div>
+      <div class="fb improve-box">
+        <h3><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#232E83" d="M4 20h4l10.5-10.5-4-4L4 16v4zm16.7-13.3c.4-.4.4-1 0-1.4l-2-2c-.4-.4-1-.4-1.4 0l-1.6 1.6 4 4 1-1.2z"/></svg>Things to improve on</h3>
+        <ul id="fb-improve"></ul>
+      </div>
     </div>
   </section>
 </main>
@@ -107,28 +299,86 @@
 <script>
 /* ===================== SETTINGS: edit these ===================== */
 var CONFIG = {
-  // Paste the HTTP POST URL from your Power Automate flow's trigger, between the quotes.
+  // HTTP POST URL of the flow that saves results (concurrency 1), between the quotes.
   FLOW_URL: "https://defaulte08016f9d1fd4cbb83b0b76eb43616.27.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/08/workflows/459417ab206247b79e5cd1b6bcaeeb70/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=UMmO4frUuk_RgzXJ12Q87F2vLV1vBS3tJ0LIIhQ_fLA",
-  // Any word you like. Use the same word in the flow's Condition step.
-  SHARED_KEY: "koala42",
-  TIME_LIMIT_MINUTES: 30,
-  TITLE: "Year 8 Numeracy Check"
+  // HTTP POST URL of the sign-in flow. Leave empty to use FLOW_URL for sign-in too.
+  LOGIN_URL: "",
+  // The round now comes from the Settings tab of the workbook.
+  // This one is only used in preview mode (when FLOW_URL is empty).
+  ROUND: "preview",
+  TITLE: "Numeracy Screener"
 };
 /* ================================================================ */
 </script>
 
 <script>
 /* ============================================================
-   Year 8 Numeracy Screener: item bank, routing and scoring
+   Numeracy Screener: question templates, order, routing, scoring and student feedback
+   Every question is multiple choice. Each student gets their own numbers,
+   worked out from their student ID and the screening round.
    ============================================================ */
 
-// Levels used throughout
 var NAPLAN_LEVELS = ["Needs additional support", "Developing", "Strong", "Exceeding"];
+// Easiest band first: questions are shuffled within each band, bands stay in this order
+var GROUP_ORDER = ["F", "N", "D", "S", "E"];
 
-var CANTEEN_TABLE =
-  '<table class="data"><tr><th>Day</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>' +
-  '<tr><th>Sales</th><td>42</td><td>37</td><td>55</td><td>48</td><td>51</td></tr></table>';
+/* ---------- seeded random numbers ---------- */
+function hashText(s) {
+  var h = 2166136261;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h >>> 0;
+}
+function makeRng(seedText) {
+  var a = hashText(seedText) || 1;
+  function next() {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  return {
+    next: next,
+    int: function (lo, hi) { return lo + Math.floor(next() * (hi - lo + 1)); },
+    pick: function (arr) { return arr[Math.floor(next() * arr.length)]; },
+    chance: function () { return next() < 0.5; },
+    shuffle: function (arr) {
+      var b = arr.slice();
+      for (var i = b.length - 1; i > 0; i--) { var j = Math.floor(next() * (i + 1)); var t = b[i]; b[i] = b[j]; b[j] = t; }
+      return b;
+    }
+  };
+}
 
+/* ---------- formatting ---------- */
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+function num(x) {
+  // up to 2 decimal places, trailing zeros dropped, space between thousands (4 400)
+  var r = Math.round(x * 100) / 100;
+  var neg = r < 0; r = Math.abs(r);
+  var parts = String(r).split(".");
+  var whole = parts[0];
+  if (whole.length >= 4) whole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return (neg ? "−" : "") + whole + (parts[1] ? "." + parts[1] : "");
+}
+function money(cents) {
+  var c = Math.round(cents);
+  return "$" + (c % 100 === 0 ? num(c / 100) : (c / 100).toFixed(2));
+}
+function dec1(tenths) { return (tenths / 10).toFixed(1); }
+var NAMES = ["Sam", "Mia", "Leo", "Ava", "Noah", "Zara", "Jack", "Isla", "Kai", "Ruby", "Eli", "Tara"];
+var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+// wrong: believable wrong answers in order of preference; the first three that differ from each other and the answer are used
+function q(text, answer, wrong, html) {
+  var picked = [];
+  wrong.forEach(function (w) { if (w !== answer && picked.indexOf(w) < 0 && picked.length < 3) picked.push(w); });
+  return { text: text, html: html || "", answer: answer, options: [answer].concat(picked) };
+}
+
+var MAP_CELLS = [["A1", "Car park"], ["B1", "Library"], ["D1", "Oval"], ["A2", "Office"], ["C2", "Canteen"],
+                 ["A3", "Gym"], ["B3", "Hall"], ["D3", "Gate"]];
 var MAP_TABLE =
   '<table class="data map"><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>' +
   '<tr><th>1</th><td>Car park</td><td>Library</td><td></td><td>Oval</td></tr>' +
@@ -136,107 +386,350 @@ var MAP_TABLE =
   '<tr><th>3</th><td>Gym</td><td>Hall</td><td></td><td>Gate</td></tr></table>' +
   '<p class="hint">North is at the top.</p>';
 
-/* Item fields (every item is multiple choice, like OLNA)
-   group   F = foundation (ACSF L1), N = Year 7 Needs additional support (ACSF L2),
-           D = Year 7 Developing, S = Year 7 Strong (ACSF L3 standard), E = Year 7 Exceeding
-   acsf    closest ACSF numeracy indicator, "none" or "above L3"
-   answer  the exact text of the correct option
-   html    optional table shown with the question                                        */
-var ITEMS = {
-  // ---------- Stage 1 core: 4 Developing + 8 Strong ----------
-  C01: { group: "D", acsf: "3.10", answer: "75%", options: ["34%", "43%", "75%", "0.75%"], text: "What is 3/4 written as a percentage?" },
-  C02: { group: "D", acsf: "3.10", answer: "2 500 g", options: ["25 g", "250 g", "2 500 g", "25 000 g"], text: "How many grams are in 2.5 kg?" },
-  C03: { group: "D", acsf: "3.09", answer: "2:35 pm", options: ["2:35 am", "2:35 pm", "12:35 pm", "4:35 pm"], text: "Which 12-hour time is the same as 14:35?" },
-  C04: { group: "D", acsf: "3.10", answer: "$9.05", options: ["$4.25", "$7.20", "$9.05", "$12.75"],
-         text: "Sam buys 3 notebooks at $2.40 each and a pen for $1.85. What is the total cost?" },
-  C05: { group: "S", acsf: "3.10", answer: "4 400", options: ["4 000", "4 300", "4 390", "4 400"], text: "What is 4 386 rounded to the nearest hundred?" },
-  C06: { group: "S", acsf: "3.10", answer: "$12", options: ["$8", "$12", "$15", "$68"], text: "What is 15% of $80?" },
-  C07: { group: "S", acsf: "3.10", answer: "2", options: ["2", "10", "38", "102"], text: "What is 20 − 3 × (4 + 2)?" },
-  C08: { group: "S", acsf: "3.10", answer: "5 cups", options: ["4 cups", "5 cups", "6 cups", "11 cups"],
-         text: "A recipe uses 3 cups of flour to make 12 muffins. How many cups of flour are needed for 20 muffins?" },
-  C09: { group: "S", acsf: "3.10", answer: "30 m²", options: ["11.5 m²", "15 m²", "23 m²", "30 m²"],
-         text: "A rectangular garden bed is 7.5 m long and 4 m wide. What is its area?" },
-  C10: { group: "S", acsf: "3.09", answer: "16:35", options: ["15:35", "16:35", "16:95", "4:35"],
-         text: "A train leaves at 13:45. The trip takes 2 hours 50 minutes. What time does it arrive (24-hour time)?" },
-  C11: { group: "S", acsf: "3.10", answer: "17 km", options: ["8.4 km", "15 km", "17 km", "34 km"],
-         text: "On a map, 1 cm stands for 5 km. Two towns are 3.4 cm apart on the map. How far apart are they in real life?" },
-  C12: { group: "S", acsf: "3.10", answer: "40%", options: ["20%", "25%", "40%", "60%"],
-         text: "A spinner has 5 equal sections. 2 of them are green. What is the probability of landing on green?" },
+/* ---------- question templates ----------
+   group: F = ACSF Level 1, N = Year 7 Needs additional support (ACSF Level 2), D = Developing,
+          S = Strong (ACSF Level 3, the OLNA standard), E = Exceeding
+   gen(R) returns { text, html, answer, options[4] } or null to draw again.
+   Wrong options come from common errors, so they stay believable for any numbers. */
+var TEMPLATES = {
+  // ===== Part 1 core: Developing =====
+  C01: { group: "D", acsf: "3.10", vary: "Fraction from 1/4, 3/4, 1/5, 2/5, 3/5, 4/5, 3/10, 7/10",
+    gen: function (R) {
+      var f = R.pick([[1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [3, 10], [7, 10]]), n = f[0], d = f[1];
+      return q("What is " + n + "/" + d + " written as a percentage?", num(n * 100 / d) + "%",
+        ["" + n + d + "%", "" + d + n + "%", num(n / d) + "%"]);
+    } },
+  C02: { group: "D", acsf: "3.10", vary: "Mass from 1.2 to 4.5 kg (one decimal place)",
+    gen: function (R) {
+      var t = R.pick([12, 15, 18, 24, 25, 27, 35, 36, 45]); // tenths of a kg
+      return q("How many grams are in " + dec1(t) + " kg?", num(t * 100) + " g",
+        [num(t * 10) + " g", num(t) + " g", num(t * 1000) + " g"]);
+    } },
+  C03: { group: "D", acsf: "3.09", vary: "24-hour time from 13:05 to 21:55",
+    gen: function (R) {
+      var h = R.int(13, 21), mm = pad2(R.pick([5, 10, 15, 20, 25, 35, 40, 45, 50, 55]));
+      return q("Which 12-hour time is the same as " + h + ":" + mm + "?", (h - 12) + ":" + mm + " pm",
+        [(h - 12) + ":" + mm + " am", (h - 10) + ":" + mm + " pm", h + ":" + mm + " pm"]);
+    } },
+  C04: { group: "D", acsf: "3.10", vary: "Name, items, 2 to 4 items at $1.20 to $3.80, extra item $1.15 to $2.95",
+    gen: function (R) {
+      var name = R.pick(NAMES), it = R.pick([["notebooks", "a pen"], ["pens", "a ruler"], ["drinks", "a sandwich"], ["muffins", "a juice"]]);
+      var n = R.int(2, 4), p = R.int(12, 38) * 10, x = R.int(23, 59) * 5;
+      if (p % 100 === 0 || x % 100 === 0) return null;
+      return q(name + " buys " + n + " " + it[0] + " at " + money(p) + " each and " + it[1] + " for " + money(x) + ". What is the total cost?",
+        money(n * p + x), [money(p + x), money(n * p), money(n * (p + x))]);
+    } },
+  // ===== Part 1 core: Strong (ACSF Level 3) =====
+  C05: { group: "S", acsf: "3.10", vary: "Four-digit number, never on a halfway point",
+    gen: function (R) {
+      var th = R.int(1, 9), h = R.int(1, 8), t = R.pick([1, 2, 3, 4, 6, 7, 8, 9]), o = R.int(0, 9);
+      var n = th * 1000 + h * 100 + t * 10 + o, up = th * 1000 + (h + 1) * 100, down = th * 1000 + h * 100;
+      var right = t >= 5 ? up : down, wrongWay = t >= 5 ? down : up;
+      return q("What is " + num(n) + " rounded to the nearest hundred?", num(right),
+        [num(wrongWay), num(Math.round(n / 10) * 10), num(Math.round(n / 1000) * 1000)]);
+    } },
+  C06: { group: "S", acsf: "3.10", vary: "15%, 35% or 45% of $40 to $160",
+    gen: function (R) {
+      var p = R.pick([15, 35, 45]), a = R.pick([40, 60, 80, 120, 140, 160]), ans = p * a / 100;
+      return q("What is " + p + "% of $" + a + "?", money(ans * 100), [money(a * 10), money(p * 100), money((a - ans) * 100)]);
+    } },
+  C07: { group: "S", acsf: "3.10", vary: "a − b × (c + d) with small whole numbers",
+    gen: function (R) {
+      var b = R.int(2, 4), c = R.int(2, 5), d = R.int(1, 4), a = R.int(b * (c + d) + 2, b * (c + d) + 15);
+      return q("What is " + a + " − " + b + " × (" + c + " + " + d + ")?", num(a - b * (c + d)),
+        [num(a - b * c + d), num(a + b * (c + d)), num((a - b) * (c + d))]);
+    } },
+  C08: { group: "S", acsf: "3.10", vary: "Recipe context, rate of 3 to 6 per unit, 4 to 7 units needed",
+    gen: function (R) {
+      var c = R.pick([["cups of flour", "cups", "muffins"], ["eggs", "eggs", "pancakes"], ["scoops of mix", "scoops", "cupcakes"]]);
+      var r = R.int(3, 6), k = R.pick([2, 3]), x = R.int(4, 7);
+      if (x === k) return null;
+      var m = k * r, t = x * r;
+      return q("A recipe uses " + k + " " + c[0] + " to make " + m + " " + c[2] + ". How many " + c[0] + " are needed for " + t + " " + c[2] + "?",
+        x + " " + c[1], [(x - 1) + " " + c[1], (x + 1) + " " + c[1], (k + t - m) + " " + c[1]]);
+    } },
+  C09: { group: "S", acsf: "3.10", vary: "Rectangle 5.5 to 9.5 m long, 2, 4 or 6 m wide",
+    gen: function (R) {
+      var l = R.pick([55, 65, 75, 85, 95]), w = R.pick([2, 4, 6]), thing = R.pick(["garden bed", "classroom floor", "rug", "deck"]);
+      return q("A rectangular " + thing + " is " + dec1(l) + " m long and " + w + " m wide. What is its area?", num(l * w / 10) + " m²",
+        [num(2 * (l + w * 10) / 10) + " m²", num((l + w * 10) / 10) + " m²", num(l * w / 20) + " m²"]);
+    } },
+  C10: { group: "S", acsf: "3.09", vary: "Departure 11:25 to 14:55, trip 1 to 3 hours with minutes that carry into the next hour",
+    gen: function (R) {
+      var h = R.int(11, 14), m = R.pick([25, 30, 35, 40, 45, 50, 55]), H = R.int(1, 3);
+      var M = R.pick([30, 35, 40, 45, 50, 55].filter(function (v) { return m + v >= 60; }));
+      var eh = h + H + 1, em = pad2(m + M - 60), mode = R.pick(["train", "bus", "ferry"]);
+      return q("A " + mode + " leaves at " + h + ":" + pad2(m) + ". The trip takes " + H + (H === 1 ? " hour " : " hours ") + M + " minutes. What time does it arrive (24-hour time)?",
+        eh + ":" + em, [(eh - 1) + ":" + em, (h + H) + ":" + (m + M), (eh - 12) + ":" + em]);
+    } },
+  C11: { group: "S", acsf: "3.10", vary: "Scale 1 cm = 2, 4 or 5 km; map distance 2.5 to 6.5 cm",
+    gen: function (R) {
+      var s = R.pick([2, 4, 5]), d = R.pick([25, 34, 35, 42, 56, 65]);
+      return q("On a map, 1 cm stands for " + s + " km. Two towns are " + dec1(d) + " cm apart on the map. How far apart are they in real life?",
+        num(s * d / 10) + " km", [num(s + d / 10) + " km", num(s * Math.floor(d / 10)) + " km", num(d) + " km"]);
+    } },
+  C12: { group: "S", acsf: "3.10", vary: "Spinner with 4, 5 or 10 equal sections",
+    gen: function (R) {
+      var f = R.pick([[4, 1], [4, 3], [5, 1], [5, 2], [5, 3], [5, 4], [10, 3], [10, 7], [10, 9]]), n = f[0], g = f[1];
+      return q("A spinner has " + n + " equal sections. " + g + " of them are green. What is the probability of landing on green?",
+        num(g * 100 / n) + "%", [num((n - g) * 100 / n) + "%", num(100 / n) + "%", g + "%", (g * 10) + "%", num((g + 1) * 100 / n) + "%"]);
+    } },
 
-  // ---------- Foundation: ACSF Level 1 ----------
-  F01: { group: "F", acsf: "1.10", answer: "283", options: ["13", "273", "283", "293"],
-         text: "Year 8 has 148 students and Year 7 has 135 students. How many students is that altogether?" },
-  F02: { group: "F", acsf: "1.10", answer: "$12", options: ["$8", "$12", "$13", "$28"],
-         text: "You buy a drink for $3 and a pie for $5. You pay with a $20 note. How much change do you get?" },
-  F03: { group: "F", acsf: "1.10", answer: "45", options: ["30", "40", "45", "180"], text: "What is half of 90?" },
-  F04: { group: "F", acsf: "1.10", answer: "1 metre", options: ["1 metre", "80 centimetres", "They are the same length", "You cannot tell"],
-         text: "Which is longer: 1 metre or 80 centimetres?" },
-  F05: { group: "F", acsf: "1.11", answer: "March", options: ["January", "February", "March", "December"],
-         text: "A note is dated 14/3/26. Which month is that?" },
-  F06: { group: "F", acsf: "1.10", answer: "Wednesday", options: ["Monday", "Wednesday", "Thursday", "Friday"],
-         html: CANTEEN_TABLE, text: "This table shows canteen sales for one week. Which day had the most sales?" },
+  // ===== ACSF Level 1 (Low route) =====
+  F01: { group: "F", acsf: "1.10", vary: "Two numbers in the 100s, with a carry",
+    gen: function (R) {
+      var a = R.int(120, 189), b = R.int(110, 179);
+      if ((a % 10) + (b % 10) < 10 || a + b >= 400) return null;
+      var t = R.chance() ? "One sports team has " + a + " students and another has " + b + " students. How many students is that altogether?"
+                         : "One class collected " + a + " cans and another collected " + b + " cans. How many cans is that altogether?";
+      return q(t, num(a + b), [num(a + b - 10), num(a + b + 10), num(Math.abs(a - b))]);
+    } },
+  F02: { group: "F", acsf: "1.10", vary: "Two items costing $2 to $8, paid with $10 or $20",
+    gen: function (R) {
+      var it = R.pick([["a drink", "a pie"], ["a sandwich", "an apple"], ["a pen", "a notebook"]]);
+      var x = R.int(2, 7), y = R.int(2, 8), note = R.pick([10, 20]);
+      if (x + y >= note - 1) return null;
+      var ans = note - x - y;
+      return q("You buy " + it[0] + " for $" + x + " and " + it[1] + " for $" + y + ". You pay with a $" + note + " note. How much change do you get?",
+        "$" + ans, ["$" + (x + y), "$" + (note + x + y), "$" + (ans + 1)]);
+    } },
+  F03: { group: "F", acsf: "1.10", vary: "Half of an even number from 42 to 98",
+    gen: function (R) {
+      var n = R.int(21, 49) * 2;
+      return q("What is half of " + n + "?", num(n / 2), [num(n * 2), num(n / 2 - 5), num(n / 2 + 10)]);
+    } },
+  F04: { group: "F", acsf: "1.10", vary: "Length, mass or capacity: 1 whole unit against a part in smaller units",
+    gen: function (R) {
+      var v = R.pick([["longer", "1 metre", "centimetres", [60, 70, 75, 80, 90, 120, 150]],
+                      ["heavier", "1 kilogram", "grams", [500, 600, 700, 800, 1500]],
+                      ["holds more", "1 litre", "millilitres", [500, 600, 750, 900, 1500]]]);
+      var amt = R.pick(v[3]), base = v[0] === "longer" ? 100 : 1000;
+      var other = num(amt) + " " + v[2], ans = amt > base ? other : v[1];
+      var verb = v[0] === "holds more" ? "Which holds more" : "Which is " + v[0];
+      return q(verb + ": " + v[1] + " or " + other + "?", ans,
+        [ans === other ? v[1] : other, "They are the same", "You cannot tell"]);
+    } },
+  F05: { group: "F", acsf: "1.11", vary: "Any date written day/month/year",
+    gen: function (R) {
+      var m = R.int(1, 12), d = R.int(13, 28);
+      return q("A note is dated " + d + "/" + m + "/26. Which month is that?", MONTHS[m - 1],
+        [MONTHS[(m + 10) % 12], MONTHS[m % 12], MONTHS[(m + 5) % 12]]);
+    } },
+  F06: { group: "F", acsf: "1.10", vary: "Five sales figures from 30 to 60; asks for the most or the fewest",
+    gen: function (R) {
+      var vals = R.shuffle([31, 34, 37, 39, 42, 44, 46, 48, 51, 53, 55, 58]).slice(0, 5);
+      var most = R.chance(), target = most ? Math.max.apply(null, vals) : Math.min.apply(null, vals);
+      var day = DAYS[vals.indexOf(target)];
+      var html = '<table class="data"><tr><th>Day</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr><tr><th>Sales</th><td>' +
+        vals.join("</td><td>") + "</td></tr></table>";
+      var others = R.shuffle(DAYS.filter(function (x) { return x !== day; })).slice(0, 3);
+      return q("This table shows canteen sales for one week. Which day had the " + (most ? "most" : "fewest") + " sales?", day, others, html);
+    } },
 
-  // ---------- Year 7 Needs additional support: ACSF Level 2 ----------
-  N01: { group: "N", acsf: "2.09", answer: "4 512, 40 512, 45 021, 45 102",
-         options: ["4 512, 40 512, 45 021, 45 102", "4 512, 40 512, 45 102, 45 021",
-                   "40 512, 4 512, 45 021, 45 102", "45 102, 45 021, 40 512, 4 512"],
-         text: "Which list is in order from smallest to largest?" },
-  N02: { group: "N", acsf: "2.10", answer: "15", options: ["15", "20", "56", "240"], text: "What is 1/4 of 60?" },
-  N03: { group: "N", acsf: "2.10", answer: "144", options: ["30", "124", "144", "164"],
-         text: "There are 6 boxes with 24 pencils in each box. How many pencils are there?" },
-  N04: { group: "N", acsf: "2.11", answer: "50 − 18", options: ["50 + 18", "50 − 18", "50 × 18", "18 − 50"],
-         text: "Mia has $50 and spends $18. Which number sentence shows how much she has left?" },
-  N05: { group: "N", acsf: "2.09", answer: "28 minutes", options: ["28 minutes", "32 minutes", "38 minutes", "68 minutes"],
-         text: "A bus leaves at 8:47 am and arrives at 9:15 am. How long is the trip?" },
-  N06: { group: "N", acsf: "2.10", answer: "Canteen", options: ["Office", "Library", "Canteen", "Hall"],
-         html: MAP_TABLE, text: "Use the school map. What is in square C2?" },
+  // ===== Year 7 Needs additional support, ACSF Level 2 (Low route) =====
+  N01: { group: "N", acsf: "2.09", vary: "Four numbers built from the same four digits",
+    gen: function (R) {
+      var dg = R.shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]).slice(0, 4), w = dg[0], x = dg[1], y = dg[2], z = dg[3];
+      var n1 = 1000 * w + 100 * x + 10 * y + z, n2 = 10000 * w + 100 * x + 10 * y + z,
+          n3 = 10000 * w + 1000 * x + 10 * z + y, n4 = 10000 * w + 1000 * x + 100 * y + z;
+      var L = function (a) { return a.map(num).join(", "); };
+      return q("Which list is in order from smallest to largest?", L([n1, n2, n3, n4]),
+        [L([n1, n2, n4, n3]), L([n2, n1, n3, n4]), L([n4, n3, n2, n1])]);
+    } },
+  N02: { group: "N", acsf: "2.10", vary: "1/2, 1/3, 1/4 or 1/5 of a number up to 100",
+    gen: function (R) {
+      var d = R.int(2, 5), n = d * R.int(8, 20);
+      if (n > 100) return null;
+      return q("What is 1/" + d + " of " + n + "?", num(n / d), [num(n * d), num(n - d), num(n / d + 5)]);
+    } },
+  N03: { group: "N", acsf: "2.10", vary: "4 to 9 groups of 12 to 36",
+    gen: function (R) {
+      var c = R.pick([["boxes", "pencils"], ["packets", "stickers"], ["rows", "chairs"], ["crates", "apples"]]);
+      var n = R.int(4, 9), k = R.int(12, 36);
+      return q("There are " + n + " " + c[0] + " with " + k + " " + c[1] + " in each. How many " + c[1] + " are there?",
+        num(n * k), [num(n + k), num(n * k - 20), num(n * k + 20)]);
+    } },
+  N04: { group: "N", acsf: "2.11", vary: "Spending, receiving, buying several or sharing (all four operations)",
+    gen: function (R) {
+      var name = R.pick(NAMES), a = R.int(30, 90), b = R.int(10, 29), n = R.int(3, 6), kind = R.int(0, 3);
+      var T = "×", D = "÷", Mi = "−";
+      if (kind === 0) return q(name + " has $" + a + " and spends $" + b + ". Which number sentence shows how much " + name + " has left?",
+        a + " " + Mi + " " + b, [a + " + " + b, a + " " + T + " " + b, b + " " + Mi + " " + a]);
+      if (kind === 1) return q(name + " has $" + a + " and is given $" + b + " more. Which number sentence shows how much " + name + " has now?",
+        a + " + " + b, [a + " " + Mi + " " + b, a + " " + T + " " + b, b + " " + Mi + " " + a]);
+      if (kind === 2) return q(name + " buys " + n + " tickets at $" + b + " each. Which number sentence shows the total cost?",
+        n + " " + T + " " + b, [n + " + " + b, b + " " + Mi + " " + n, b + " " + D + " " + n]);
+      return q(name + " shares $" + a + " equally between " + n + " friends. Which number sentence shows how much each friend gets?",
+        a + " " + D + " " + n, [n + " " + D + " " + a, a + " " + Mi + " " + n, a + " " + T + " " + n]);
+    } },
+  N05: { group: "N", acsf: "2.09", vary: "Morning trip that crosses the hour",
+    gen: function (R) {
+      var h = R.int(7, 10), m = R.int(7, 11) * 5, em = R.int(1, 5) * 5, ans = 60 - m + em;
+      var decimalSlip = ((h + 1) * 100 + em) - (h * 100 + m);
+      return q("A bus leaves at " + h + ":" + pad2(m) + " am and arrives at " + (h + 1) + ":" + pad2(em) + " am. How long is the trip?",
+        ans + " minutes", [(ans + 4) + " minutes", (ans + 10) + " minutes", decimalSlip + " minutes"]);
+    } },
+  N06: { group: "N", acsf: "2.10", vary: "Same school map; asks about any of 8 squares",
+    gen: function (R) {
+      var cell = R.pick(MAP_CELLS);
+      var others = R.shuffle(MAP_CELLS.filter(function (c) { return c[0] !== cell[0]; })).slice(0, 3).map(function (c) { return c[1]; });
+      return q("Use the school map. What is in square " + cell[0] + "?", cell[1], others, MAP_TABLE);
+    } },
 
-  // ---------- Extra Year 7 Developing ----------
-  D01: { group: "D", acsf: "2.09", answer: "1/5", options: ["1/5", "1/8", "1/10", "1/12"], text: "Which fraction is the largest?" },
-  D02: { group: "D", acsf: "none", answer: "6.3", options: ["5.7", "6.2", "6.3", "6.6"], text: "What comes next in the pattern 3.5, 4.2, 4.9, 5.6, …?" },
-  D03: { group: "D", acsf: "none", answer: "9", options: ["8", "9", "48", "60"], text: "What is the missing number? ? × 6 = 54" },
-  D04: { group: "D", acsf: "3.10", answer: "35°", options: ["35°", "90°", "120°", "180°"], text: "Which of these angles is acute?" },
+  // ===== Extra Developing (Low and Middle routes) =====
+  D01: { group: "D", acsf: "2.09", vary: "Four unit fractions from 1/2 to 1/12; asks for the largest or smallest",
+    gen: function (R) {
+      var ds = R.shuffle([2, 3, 4, 5, 6, 8, 10, 12]).slice(0, 4), big = R.chance();
+      var pickD = big ? Math.min.apply(null, ds) : Math.max.apply(null, ds);
+      return q("Which fraction is the " + (big ? "largest" : "smallest") + "?", "1/" + pickD,
+        ds.filter(function (d) { return d !== pickD; }).map(function (d) { return "1/" + d; }));
+    } },
+  D02: { group: "D", acsf: "none", vary: "Start 2.1 to 4.9, adding 0.3 to 0.8 each time",
+    gen: function (R) {
+      var a = R.int(21, 49), s = R.pick([3, 4, 6, 7, 8]), terms = [a, a + s, a + 2 * s, a + 3 * s], nx = a + 4 * s;
+      return q("What comes next in the pattern " + terms.map(dec1).join(", ") + ", …?", dec1(nx),
+        [dec1(a + 3 * s + 1), dec1(nx - 1), dec1(nx + 1)]);
+    } },
+  D03: { group: "D", acsf: "none", vary: "? × b = c with b from 3 to 9",
+    gen: function (R) {
+      var b = R.int(3, 9), x = R.int(4, 12), c = b * x;
+      return q("What is the missing number? ? × " + b + " = " + c, num(x), [num(x - 1), num(c - b), num(c + b)]);
+    } },
+  D04: { group: "D", acsf: "3.10", vary: "Asks for the acute or the obtuse angle",
+    gen: function (R) {
+      var ac = R.int(2, 17) * 5, ob = R.int(19, 35) * 5, askAcute = R.chance();
+      var all = [ac + "°", "90°", ob + "°", "180°"], ans = askAcute ? all[0] : all[2];
+      return q("Which of these angles is " + (askAcute ? "acute" : "obtuse") + "?", ans, all.filter(function (o) { return o !== ans; }));
+    } },
 
-  // ---------- Extra Year 7 Strong: ACSF Level 3 (decision items) ----------
-  S01: { group: "S", acsf: "3.10", answer: "8 000", options: ["7 000", "7 600", "7 650", "8 000"], text: "What is 7 649 rounded to the nearest thousand?" },
-  S02: { group: "S", acsf: "3.10", answer: "$49.50", options: ["$40.50", "$45.10", "$49.50", "$55.00"],
-         text: "A $45 phone bill goes up by 10%. What is the new bill?" },
-  S03: { group: "S", acsf: "3.10", answer: "9", options: ["1.5", "4", "9", "21"], text: "What is (18 − 6) ÷ 3 + 5?" },
-  S04: { group: "S", acsf: "3.10", answer: "7 L", options: ["6 L", "7 L", "10.5 L", "18 L"],
-         text: "4 L of paint covers 24 m² of wall. How much paint is needed for 42 m²?" },
-  S05: { group: "S", acsf: "3.10", answer: "$9.50", options: ["$6.30", "$7.60", "$9.50", "$95.00"],
-         text: "Bananas cost $3.80 per kilogram. How much do 2.5 kg of bananas cost?" },
-  S06: { group: "S", acsf: "3.10", answer: "26 m", options: ["13 m", "19.5 m", "26 m", "42.25 m"],
-         text: "A square courtyard has sides of 6.5 m. What is its perimeter?" },
-  S07: { group: "S", acsf: "3.10", answer: "180 cm", options: ["0.18 cm", "18 cm", "180 cm", "1 800 cm"], text: "How many centimetres are in 1.8 m?" },
-  S08: { group: "S", acsf: "3.09", answer: "9:35 pm", options: ["8:35 pm", "9:35 pm", "9:35 am", "21:35 pm"],
-         text: "A movie starts at 19:20 and runs for 2 hours 15 minutes. What time does it finish?" },
-  S09: { group: "S", acsf: "3.10", answer: "0.6", options: ["0.4", "0.6", "1.5", "6"],
-         text: "A bag holds 4 red counters and 6 blue counters. What is the probability of taking a blue counter, as a decimal?" },
-  S10: { group: "S", acsf: "3.09", answer: "7", options: ["3", "4", "7", "8"],
-         text: "Ten students scored 6, 7, 7, 8, 8, 8, 9, 9, 10 and 10 on a quiz. How many students scored 8 or more?" },
+  // ===== Extra Strong, ACSF Level 3 (Middle and High routes) =====
+  S01: { group: "S", acsf: "3.10", vary: "Four-digit number, never on a halfway point",
+    gen: function (R) {
+      var th = R.int(1, 8), h = R.pick([1, 2, 3, 4, 6, 7, 8, 9]), t = R.int(0, 9), o = R.int(1, 9);
+      var n = th * 1000 + h * 100 + t * 10 + o, right = (h >= 5 ? th + 1 : th) * 1000, wrongWay = (h >= 5 ? th : th + 1) * 1000;
+      return q("What is " + num(n) + " rounded to the nearest thousand?", num(right),
+        [num(wrongWay), num(th * 1000 + h * 100), num(Math.round(n / 10) * 10)]);
+    } },
+  S02: { group: "S", acsf: "3.10", vary: "$30 to $90 going up by 10% or 20%",
+    gen: function (R) {
+      var b = R.int(6, 18) * 5, p = R.pick([10, 20]), thing = R.pick(["phone bill", "gym membership", "bus pass"]);
+      return q("A $" + b + " " + thing + " goes up by " + p + "%. What is the new price?", money(b * (100 + p)),
+        [money(b * (100 - p)), money((b + p) * 100), money(b * 100 + p)]);
+    } },
+  S03: { group: "S", acsf: "3.10", vary: "(a − b) ÷ c + d with whole-number steps",
+    gen: function (R) {
+      var c = R.int(2, 5), k = R.int(3, 6), b = R.int(3, 9), a = b + c * k, d = R.int(2, 9);
+      return q("What is (" + a + " − " + b + ") ÷ " + c + " + " + d + "?", num(k + d),
+        [num(k), num((a - b) / (c + d)), num(a - b / c + d)]);
+    } },
+  S04: { group: "S", acsf: "3.10", vary: "Paint or lawn seed; 5, 6 or 8 m² per unit",
+    gen: function (R) {
+      var c = R.pick([["L of paint", "of wall", "L"], ["kg of lawn seed", "of lawn", "kg"]]);
+      var r = R.pick([5, 6, 8]), l = R.int(2, 5), x = R.int(4, 9);
+      if (x === l) return null;
+      var a = r * l, t = x * r;
+      return q(l + " " + c[0] + " covers " + a + " m² " + c[1] + ". How much is needed for " + t + " m²?", x + " " + c[2],
+        [num(t / l) + " " + c[2], r + " " + c[2], (x + 1) + " " + c[2]]);
+    } },
+  S05: { group: "S", acsf: "3.10", vary: "Price $2.40 to $4.60 per kg; 1.5, 2.5 or 3.5 kg",
+    gen: function (R) {
+      var p = R.pick([240, 260, 280, 320, 340, 360, 380, 420, 440, 460]), m = R.pick([15, 25, 35]);
+      var food = R.pick(["Bananas", "Apples", "Grapes", "Carrots"]);
+      return q(food + " cost " + money(p) + " per kilogram. How much do " + dec1(m) + " kg cost?", money(p * m / 10),
+        [money(p + m * 10), money(p * Math.floor(m / 10)), money(p * m)]);
+    } },
+  S06: { group: "S", acsf: "3.10", vary: "Square with sides 4.5 to 8.5 m",
+    gen: function (R) {
+      var s = R.pick([45, 55, 65, 75, 85]), thing = R.pick(["courtyard", "sandpit", "garden bed", "stage"]);
+      return q("A square " + thing + " has sides of " + dec1(s) + " m. What is its perimeter?", num(4 * s / 10) + " m",
+        [num(2 * s / 10) + " m", num(3 * s / 10) + " m", num(s * s / 100) + " m"]);
+    } },
+  S07: { group: "S", acsf: "3.10", vary: "Metres to centimetres, kilometres to metres, or litres to millilitres",
+    gen: function (R) {
+      var v = R.pick([["centimetres", "m", "cm", 100, [12, 15, 18, 23, 26, 34]], ["metres", "km", "m", 1000, [15, 24, 36, 42]],
+                      ["millilitres", "L", "mL", 1000, [12, 15, 25, 35]]]);
+      var t = R.pick(v[4]), f = v[3];
+      return q("How many " + v[0] + " are in " + dec1(t) + " " + v[1] + "?", num(t * f / 10) + " " + v[2],
+        [num(t * f / 100) + " " + v[2], num(t * f) + " " + v[2], num(t / 100) + " " + v[2]]);
+    } },
+  S08: { group: "S", acsf: "3.09", vary: "Evening start 18:20 to 20:50, 1 to 2 hours with a carry",
+    gen: function (R) {
+      var h = R.int(18, 20), m = R.pick([20, 25, 30, 35, 40, 45, 50]), H = R.int(1, 2);
+      var M = R.pick([15, 20, 25, 30, 35, 40, 45, 50, 55].filter(function (v) { return m + v >= 60; }));
+      var eh = h + H + 1, em = pad2(m + M - 60), e12 = eh - 12, what = R.pick(["A movie", "A concert", "A basketball game"]);
+      return q(what + " starts at " + h + ":" + pad2(m) + " and runs for " + H + (H === 1 ? " hour " : " hours ") + M + " minutes. What time does it finish?",
+        e12 + ":" + em + " pm", [(e12 - 1) + ":" + em + " pm", e12 + ":" + em + " am", eh + ":" + em + " pm"]);
+    } },
+  S09: { group: "S", acsf: "3.10", vary: "10 or 20 counters in two colours",
+    gen: function (R) {
+      var total = R.pick([10, 20]), r = R.int(2, total - 2), b = total - r;
+      if (r === b) return null;
+      return q("A bag holds " + r + " red counters and " + b + " blue counters. What is the probability of taking a blue counter, as a decimal?",
+        num(b / total), [num(r / total), num(b / r), String(b)]);
+    } },
+  S10: { group: "S", acsf: "3.09", vary: "Ten quiz scores from 5 to 10; threshold 7 or 8",
+    gen: function (R) {
+      var s = []; for (var i = 0; i < 10; i++) s.push(R.int(5, 10));
+      s.sort(function (a, b) { return a - b; });
+      var k = R.pick([7, 8]);
+      var ge = s.filter(function (v) { return v >= k; }).length, eq = s.filter(function (v) { return v === k; }).length;
+      if (eq === 0 || ge === eq) return null;
+      return q("Ten students scored " + s.slice(0, 9).join(", ") + " and " + s[9] + " on a quiz. How many students scored " + k + " or more?",
+        String(ge), [String(ge - eq), String(eq), String(10 - ge)]);
+    } },
 
-  // ---------- Year 7 Exceeding ----------
-  E01: { group: "E", acsf: "3.10", answer: "$78", options: ["$42", "$78", "$85", "$155"],
-         text: "A jacket costs $120. It is on sale with a 35% discount. What is the sale price?" },
-  E02: { group: "E", acsf: "above L3", answer: "2 × 2 × 3 × 5",
-         options: ["2 × 30", "2 × 2 × 15", "2 × 2 × 3 × 5", "4 × 3 × 5"],
-         text: "Which shows 60 as a product of prime factors?" },
-  E03: { group: "E", acsf: "above L3", answer: "27 cm²", options: ["15 cm²", "27 cm²", "30 cm²", "54 cm²"],
-         text: "A triangle has a base of 9 cm and a height of 6 cm. What is its area?" },
-  E04: { group: "E", acsf: "above L3", answer: "52°", options: ["38°", "52°", "62°", "232°"],
-         text: "Two angles sit on a straight line. One angle is 128°. What is the other angle?" },
-  E05: { group: "E", acsf: "3.10", answer: "22.1 L", options: ["6.5 L", "22.1 L", "52.3 L", "221 L"],
-         text: "A car uses 6.5 L of fuel for every 100 km. How much fuel does it use for a 340 km trip?" },
-  E06: { group: "E", acsf: "above L3", answer: "108", options: ["36", "54", "108", "168"],
-         text: "In a survey of 50 Year 8 students, 18 said they walk to school. The school has 300 Year 8 students. About how many of them would you predict walk to school?" }
+  // ===== Exceeding (High route) =====
+  E01: { group: "E", acsf: "3.10", vary: "$80 to $200 with 15%, 35% or 45% off",
+    gen: function (R) {
+      var pr = R.int(4, 10) * 20, p = R.pick([15, 35, 45]), disc = pr * p / 100, thing = R.pick(["jacket", "pair of shoes", "bike helmet", "backpack"]);
+      return q("A " + thing + " costs $" + pr + ". It is on sale with a " + p + "% discount. What is the sale price?", money((pr - disc) * 100),
+        [money(disc * 100), money((pr - p) * 100), money((pr + p) * 100)]);
+    } },
+  E02: { group: "E", acsf: "above L3", vary: "One of five numbers (60, 72, 84, 90, 126); hand-written options",
+    gen: function (R) {
+      var x = " × ";
+      var set = R.pick([
+        ["60", ["2", "2", "3", "5"], [["2", "30"], ["2", "2", "15"], ["4", "3", "5"]]],
+        ["72", ["2", "2", "2", "3", "3"], [["8", "9"], ["2", "4", "3", "3"], ["2", "2", "2", "9"]]],
+        ["84", ["2", "2", "3", "7"], [["2", "42"], ["4", "3", "7"], ["2", "6", "7"]]],
+        ["90", ["2", "3", "3", "5"], [["2", "45"], ["9", "2", "5"], ["3", "3", "10"]]],
+        ["126", ["2", "3", "3", "7"], [["2", "63"], ["6", "3", "7"], ["2", "9", "7"]]]]);
+      return q("Which shows " + set[0] + " as a product of prime factors?", set[1].join(x), set[2].map(function (a) { return a.join(x); }));
+    } },
+  E03: { group: "E", acsf: "above L3", vary: "Base 6 to 14 cm, height 4 to 8 cm",
+    gen: function (R) {
+      var b = R.pick([6, 8, 9, 10, 12, 14]), h = R.pick([4, 5, 6, 7, 8]);
+      if ((b * h) % 2) return null;
+      return q("A triangle has a base of " + b + " cm and a height of " + h + " cm. What is its area?", num(b * h / 2) + " cm²",
+        [num(b * h) + " cm²", num(b + h) + " cm²", num(2 * (b + h)) + " cm²"]);
+    } },
+  E04: { group: "E", acsf: "above L3", vary: "Known angle 101° to 164°",
+    gen: function (R) {
+      var a = R.int(101, 164);
+      return q("Two angles sit on a straight line. One angle is " + a + "°. What is the other angle?", (180 - a) + "°",
+        [(360 - a) + "°", (190 - a) + "°", (a - 90) + "°"]);
+    } },
+  E05: { group: "E", acsf: "3.10", vary: "6 to 9 L per 100 km with a 150 to 350 km trip, or 5.5 to 7.5 L with 200 to 400 km (no calculator needed)",
+    gen: function (R) {
+      // Kept to one easy multiplication: whole litres with half-hundreds of km, or half litres with whole hundreds
+      var pair = R.pick([[R.pick([60, 70, 80, 90]), R.pick([150, 250, 300, 350])], [R.pick([55, 65, 75]), R.pick([200, 300, 400])]]);
+      var r = pair[0], d = pair[1];
+      return q("A car uses " + num(r / 10) + " L of fuel for every 100 km. How much fuel does it use for a " + d + " km trip?", num(r * d / 1000) + " L",
+        [num(r / 10) + " L", num(r * d / 100) + " L", num(r / 10 + d / 100) + " L"]);
+    } },
+  E06: { group: "E", acsf: "above L3", vary: "Sample of 20 to 50, year group of 200 to 500",
+    gen: function (R) {
+      var n = R.pick([20, 25, 40, 50]), big = R.pick([200, 300, 400, 500]), k = R.int(4, n / 2);
+      if ((big * k) % n !== 0) return null;
+      var act = R.pick(["walk to school", "play a team sport", "have a pet"]), ans = big * k / n;
+      if (big * k % 100 !== 0) return null;
+      return q("In a survey of " + n + " students, " + k + " said they " + act + ". The school has " + big +
+        " students. About how many of them would you predict " + act + "?", num(ans), [num(k), num(big - ans), num(big * k / 100)]);
+    } }
 };
 
-// Every item id in a fixed order (used for results columns)
-var ITEM_IDS = Object.keys(ITEMS);
-
+var ITEM_IDS = Object.keys(TEMPLATES);
 var STAGE1 = ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12"];
-
 var ROUTES = {
   Low:    ["F01", "F02", "F03", "F04", "F05", "F06", "N01", "N02", "N03", "N04", "N05", "N06", "D01", "D02", "D03", "D04"],
   Middle: ["D01", "D02", "D03", "D04", "S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"],
@@ -245,7 +738,7 @@ var ROUTES = {
 
 // Cut points: adjust after calibrating against students with known Year 9 outcomes
 var CUTS = {
-  routeLowMax: 5,      // Stage 1 score 0-5 -> Low route
+  routeLowMax: 5,      // Part 1 score 0-5 -> Low route
   routeMiddleMax: 9,   // 6-9 -> Middle route; 10-12 -> High route
   foundationPass: 5,   // of 6
   nasPass: 5,          // of 6
@@ -255,22 +748,43 @@ var CUTS = {
   exceedingPass: 5     // of 6
 };
 
-/* ---------- Marking (every item is multiple choice) ---------- */
-function markItem(id, response) {
-  return response !== undefined && response !== null && response === ITEMS[id].answer ? 1 : 0;
+/* ---------- making one student's version of a question ---------- */
+function makeItem(id, seedText) {
+  var t = TEMPLATES[id];
+  for (var attempt = 0; attempt < 200; attempt++) {
+    var R = makeRng(seedText + "|" + id + "|" + attempt);
+    var out = t.gen(R);
+    if (!out) continue;
+    var seen = {}, ok = out.options.length === 4;
+    out.options.forEach(function (o) { if (seen[o]) ok = false; seen[o] = true; });
+    if (!ok) continue;
+    return { id: id, group: t.group, text: out.text, html: out.html, answer: out.answer, options: R.shuffle(out.options) };
+  }
+  throw new Error("Could not make question " + id);
 }
 
-/* Same option order for a given student, different between students */
-function seededShuffle(list, seedText) {
-  var h = 2166136261;
-  for (var i = 0; i < seedText.length; i++) { h ^= seedText.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-  var a = list.slice();
-  for (var j = a.length - 1; j > 0; j--) {
-    h = (Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) ^ (h >>> 13); h = h >>> 0;
-    var k = h % (j + 1); var t = a[j]; a[j] = a[k]; a[k] = t;
-  }
-  return a;
+/* Easiest band first; shuffled within each band */
+function orderPart(ids, seedText) {
+  var R = makeRng(seedText);
+  var out = [];
+  GROUP_ORDER.forEach(function (g) {
+    out = out.concat(R.shuffle(ids.filter(function (id) { return TEMPLATES[id].group === g; })));
+  });
+  return out;
 }
+
+/* Everything one student sees, the same every time for the same ID and round */
+function buildTest(studentId, round) {
+  var seed = String(studentId).trim().toUpperCase() + "|" + String(round);
+  var items = {};
+  ITEM_IDS.forEach(function (id) { items[id] = makeItem(id, seed); });
+  var routes = {};
+  Object.keys(ROUTES).forEach(function (r) { routes[r] = orderPart(ROUTES[r], seed + "|part2|" + r); });
+  return { items: items, stage1: orderPart(STAGE1, seed + "|part1"), routes: routes };
+}
+
+/* ---------- marking and scoring ---------- */
+function markItem(item, response) { return response !== undefined && response !== null && response === item.answer ? 1 : 0; }
 
 function routeFor(stage1Score) {
   if (stage1Score <= CUTS.routeLowMax) return "Low";
@@ -280,17 +794,15 @@ function routeFor(stage1Score) {
 
 function tally(ids, marks, group) {
   var right = 0, total = 0;
-  ids.forEach(function (id) {
-    if (ITEMS[id].group === group) { total++; right += marks[id] || 0; }
-  });
+  ids.forEach(function (id) { if (TEMPLATES[id].group === group) { total++; right += marks[id] || 0; } });
   return { right: right, total: total };
 }
 
-/* responses: { itemId: answer } for every item the student was shown */
-function scoreAttempt(responses, route) {
+/* responses: { itemId: chosen option text }; items: this student's questions */
+function scoreAttempt(responses, route, items) {
   var shown = STAGE1.concat(ROUTES[route]);
   var marks = {};
-  shown.forEach(function (id) { marks[id] = markItem(id, responses[id]); });
+  shown.forEach(function (id) { marks[id] = markItem(items[id], responses[id]); });
 
   var stage1 = STAGE1.reduce(function (a, id) { return a + marks[id]; }, 0);
   var F = tally(shown, marks, "F"), N = tally(shown, marks, "N"), D = tally(shown, marks, "D"),
@@ -298,7 +810,6 @@ function scoreAttempt(responses, route) {
   var devPct = D.total ? D.right / D.total : null;
   var strongPct = S.total ? S.right / S.total : null;
 
-  // OLNA risk and indicative ACSF level
   var acsf, risk;
   if (route === "Low") {
     if (F.right < CUTS.foundationPass) { acsf = "Below Level 1"; risk = "High"; }
@@ -310,221 +821,514 @@ function scoreAttempt(responses, route) {
     else { acsf = "Level 2"; risk = "At risk"; }
   }
 
-  // Year 7 NAPLAN level the screener indicates
   var naplan;
   if (devPct === null || devPct < CUTS.developingPass) naplan = NAPLAN_LEVELS[0];
   else if (strongPct === null || strongPct < CUTS.strongOnTrack) naplan = NAPLAN_LEVELS[1];
   else if (route === "High" && E.right >= CUTS.exceedingPass) naplan = NAPLAN_LEVELS[3];
   else naplan = NAPLAN_LEVELS[2];
 
-  // Flags for the teacher
   var flags = [];
   var coreDev = tally(STAGE1, marks, "D"), coreStrong = tally(STAGE1, marks, "S");
-  if (coreStrong.right > coreDev.right + 4) flags.push("Uneven: more Strong than Developing items right in Stage 1");
+  if (coreStrong.right > coreDev.right + 4) flags.push("Uneven: more Strong than Developing items right in Part 1");
   if (route === "Low" && F.right >= CUTS.foundationPass && N.right < CUTS.nasPass) flags.push("Check Level 2 gaps");
-  var blanks = shown.filter(function (id) {
-    return responses[id] === undefined || responses[id] === null || String(responses[id]).trim() === "";
-  }).length;
+  var blanks = shown.filter(function (id) { return !responses[id]; }).length;
   if (blanks >= 6) flags.push(blanks + " questions left blank");
 
   return {
-    route: route,
-    stage1: stage1,
-    foundation: route === "Low" ? F.right : null,
-    nas: route === "Low" ? N.right : null,
-    developingPct: devPct,
-    strongPct: strongPct,
-    exceeding: route === "High" ? E.right : null,
-    acsfLevel: acsf,
-    olnaRisk: risk,
-    naplanLevel: naplan,
-    flags: flags.join("; "),
-    marks: marks
+    route: route, stage1: stage1,
+    foundation: route === "Low" ? F.right : null, nas: route === "Low" ? N.right : null,
+    developingPct: devPct, strongPct: strongPct, exceeding: route === "High" ? E.right : null,
+    acsfLevel: acsf, olnaRisk: risk, naplanLevel: naplan, flags: flags.join("; "), marks: marks
   };
 }
 
-/* ---------- Results row for the Excel table ---------- */
+/* ---------- effort check: spot students who click through without trying ----------
+   seen: [{ chosen, pos (0-3 or -1 for blank), secs }] in the order the student saw them.
+   Answer positions are shuffled, so a genuine student spreads their choices across A to D.
+   By chance alone, the most-used position reaches 50% about 1 to 4 times in 100 and 60% under 1 in 1000;
+   a run of 7 of the same position happens under 1 in 200. */
+var EFFORT = {
+  fastSecs: 5,            // an answer given in under this many seconds counts as fast
+  fastCheck: 0.25,        // share of fast answers that needs a look
+  fastLikely: 0.5,        // share of fast answers that means the student was not trying
+  sameCheck: 0.5,         // share of answers in one position (e.g. all "A")
+  sameLikely: 0.6,
+  runCheck: 7,            // the same position this many times in a row
+  runLikely: 9,
+  minAnswered: 10         // too few answers to judge the pattern below this
+};
+var EFFORT_LEVELS = ["OK", "Check effort", "Likely non-trier"];
+var POSITIONS = ["A", "B", "C", "D"];
+
+function effortCheck(seen) {
+  var answered = seen.filter(function (x) { return x.pos >= 0; });
+  var n = answered.length;
+  var secs = seen.map(function (x) { return x.secs; }).filter(function (v) { return typeof v === "number"; }).sort(function (a, b) { return a - b; });
+  var median = secs.length ? (secs.length % 2 ? secs[(secs.length - 1) / 2] : (secs[secs.length / 2 - 1] + secs[secs.length / 2]) / 2) : null;
+  var fast = answered.filter(function (x) { return typeof x.secs === "number" && x.secs < EFFORT.fastSecs; }).length;
+  var counts = [0, 0, 0, 0];
+  answered.forEach(function (x) { counts[x.pos]++; });
+  var top = 0; counts.forEach(function (c, i) { if (c > counts[top]) top = i; });
+  var run = 0, best = 0, bestPos = -1, prev = -2;
+  seen.forEach(function (x) {
+    run = x.pos >= 0 && x.pos === prev ? run + 1 : (x.pos >= 0 ? 1 : 0);
+    prev = x.pos;
+    if (run > best) { best = run; bestPos = x.pos; }
+  });
+  var fastShare = n ? fast / n : 0, sameShare = n ? counts[top] / n : 0;
+  var level = 0, notes = [];
+  if (n && fastShare >= EFFORT.fastCheck) {
+    notes.push(fast + " of " + n + " answers in under " + EFFORT.fastSecs + " s");
+    level = Math.max(level, fastShare >= EFFORT.fastLikely ? 2 : 1);
+  }
+  if (n >= EFFORT.minAnswered && sameShare >= EFFORT.sameCheck) {
+    notes.push(counts[top] + " of " + n + " answers were option " + POSITIONS[top]);
+    level = Math.max(level, sameShare >= EFFORT.sameLikely ? 2 : 1);
+  }
+  var sameNoted = n >= EFFORT.minAnswered && sameShare >= EFFORT.sameCheck;
+  if (best >= EFFORT.runCheck && !(sameNoted && bestPos === top)) {
+    notes.push(best + " option " + POSITIONS[bestPos] + " answers in a row");
+    level = Math.max(level, best >= EFFORT.runLikely ? 2 : 1);
+  }
+  if (level === 1 && notes.length >= 2) level = 2;   // two warning signs together
+  return { effort: EFFORT_LEVELS[level], notes: notes.join("; "), medianSecs: median === null ? null : Math.round(median * 10) / 10,
+           fast: fast, answered: n, sameShare: sameShare, longestRun: best };
+}
+
+/* ---------- results row for the Excel table ---------- */
 var SUMMARY_COLUMNS = [
-  "Submission ID", "Submitted", "Student ID", "Name", "Class", "Route",
+  "Submission ID", "Submitted", "Round", "Login code", "Name", "Class", "Route",
   "Part 1 score (/12)", "Level 1 items (/6)", "NAS items (/6)", "Developing %", "Strong / Level 3 %",
   "Exceeding items (/6)", "Indicative ACSF level", "OLNA risk", "Screener NAPLAN level",
-  "Year 7 NAPLAN (from Roster)", "Check vs Year 7", "Suggested action", "Minutes taken", "Flags"
+  "Year 7 NAPLAN (from Roster)", "Check vs Year 7", "Suggested action", "Minutes taken",
+  "Effort", "Effort notes", "Median seconds per question", "Flags"
 ];
 var FORMULA_COLUMNS = ["Year 7 NAPLAN (from Roster)", "Check vs Year 7", "Suggested action"];
 var RESULT_COLUMNS = SUMMARY_COLUMNS.concat(ITEM_IDS).concat(["Answers"]);
 
-function pad2(n) { return (n < 10 ? "0" : "") + n; }
 function localStamp(d) {
   return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
 }
 
-function buildRow(info, r, responses) {
+/* Answers records what this student actually saw: the question, the right answer and their choice */
+function buildRow(info, r, responses, items, order) {
   var blank = function (v) { return v === null || v === undefined ? "" : v; };
+  var secsOf = info.secs || {};
+  var seen = order.map(function (id, i) {
+    var chosen = responses[id] || "";
+    var secs = typeof secsOf[id] === "number" ? Math.round(secsOf[id] * 10) / 10 : null;
+    return { n: i + 1, id: id, q: items[id].text, correct: items[id].answer, chosen: chosen,
+             pos: chosen ? items[id].options.indexOf(chosen) : -1, secs: secs };
+  });
+  var eff = effortCheck(seen);
   var row = {
-    "Submission ID": info.submissionId, "Submitted": localStamp(info.submittedAt),
-    "Student ID": info.studentId, "Name": info.name, "Class": info.cls, "Route": r.route,
+    "Submission ID": info.submissionId, "Submitted": localStamp(info.submittedAt), "Round": info.round,
+    "Login code": info.studentId, "Name": info.name, "Class": info.cls, "Route": r.route,
     "Part 1 score (/12)": r.stage1, "Level 1 items (/6)": blank(r.foundation), "NAS items (/6)": blank(r.nas),
     "Developing %": blank(r.developingPct), "Strong / Level 3 %": blank(r.strongPct),
     "Exceeding items (/6)": blank(r.exceeding), "Indicative ACSF level": r.acsfLevel, "OLNA risk": r.olnaRisk,
-    "Screener NAPLAN level": r.naplanLevel, "Minutes taken": info.minutes, "Flags": r.flags,
-    "Answers": JSON.stringify(responses)
+    "Screener NAPLAN level": r.naplanLevel, "Minutes taken": info.minutes,
+    "Effort": eff.effort, "Effort notes": eff.notes, "Median seconds per question": blank(eff.medianSecs), "Flags": r.flags,
+    "Answers": JSON.stringify(seen)
   };
   ITEM_IDS.forEach(function (id) { row[id] = Object.prototype.hasOwnProperty.call(r.marks, id) ? r.marks[id] : ""; });
   return row;
+}
+
+/* ---------- student feedback (no scores, levels or risk) ---------- */
+var AREAS = [
+  { name: "Whole numbers and rounding", items: ["F01", "F03", "N01", "N03", "C05", "S01"],
+    good: "You added, multiplied, ordered and rounded whole numbers well.",
+    tip: "Practise rounding: look at the digit just to the right of the place you are rounding to. 5 or more rounds up." },
+  { name: "Fractions", items: ["N02", "D01"],
+    good: "You found fractions of amounts and compared fractions.",
+    tip: "To find 1/4 of an amount, divide by 4. With fractions like 1/3 and 1/8, a bigger bottom number means a smaller piece." },
+  { name: "Percentages", items: ["C01", "C06", "S02", "E01"],
+    good: "You worked out percentages, increases and discounts.",
+    tip: "Find 10% by dividing by 10, then build from it: 5% is half of 10%, and 15% is 10% + 5%. For a sale price, take the discount off the original price." },
+  { name: "Money", items: ["C04", "F02", "S05"],
+    good: "You solved money problems with more than one step.",
+    tip: "Write each step down: multiply for “each”, then add any extra items. Check change by counting up to the note you paid with." },
+  { name: "Order of operations", items: ["C07", "S03"],
+    good: "You followed the order of operations, including brackets.",
+    tip: "Brackets first, then × and ÷, then + and −, working from left to right." },
+  { name: "Rates and proportion", items: ["C08", "S04", "E05"],
+    good: "You scaled recipes and rates up and down.",
+    tip: "Work out how much is needed for one (or for a simple amount like 10), then multiply up to the amount you need." },
+  { name: "Time and dates", items: ["F05", "N05", "C03", "C10", "S08"],
+    good: "You read times and dates and worked out how long things take.",
+    tip: "Count on in steps: first to the next o’clock, then the rest. In 24-hour time, take 12 off hours after 12 to get the pm time." },
+  { name: "Measurement and units", items: ["F04", "C02", "S07"],
+    good: "You converted between metric units.",
+    tip: "Learn the key links: 1 m = 100 cm, 1 kg = 1000 g, 1 L = 1000 mL. Multiply when changing to a smaller unit." },
+  { name: "Area, perimeter and angles", items: ["D04", "C09", "S06", "E03", "E04"],
+    good: "You worked with area, perimeter and angles.",
+    tip: "Perimeter is the distance around the edge. Area is the space inside (length × width; a triangle is half of base × height). Angles on a straight line add to 180°." },
+  { name: "Maps and scale", items: ["N06", "C11"],
+    good: "You used grid references and map scales.",
+    tip: "For grid references, find the letter column, then the number row. For a map scale, multiply the map distance by what 1 cm stands for." },
+  { name: "Chance and data", items: ["F06", "C12", "S09", "S10", "E06"],
+    good: "You read data and described chance as numbers.",
+    tip: "Probability = the number of ways you want ÷ the total number of outcomes. Read tables and lists carefully and count twice." },
+  { name: "Patterns and number facts", items: ["N04", "D02", "D03", "E02"],
+    good: "You continued patterns and found missing numbers.",
+    tip: "Find what changes each step in a pattern. For a missing number, use the opposite operation: ? × 5 = 40 means 40 ÷ 5." }
+];
+var FEEDBACK_MAX = 3, FEEDBACK_GOOD = 2 / 3, FEEDBACK_BLANKS = 3;
+
+/* marks: { itemId: 0 or 1 } for the questions this student saw; blanks: how many they skipped */
+function buildFeedback(marks, blanks) {
+  var rated = [];
+  AREAS.forEach(function (a) {
+    var right = 0, total = 0;
+    a.items.forEach(function (id) { if (marks[id] === 0 || marks[id] === 1) { total++; right += marks[id]; } });
+    if (total) rated.push({ area: a, ratio: right / total, total: total });
+  });
+  var good = rated.filter(function (x) { return x.ratio >= FEEDBACK_GOOD; })
+    .sort(function (a, b) { return b.ratio - a.ratio || b.total - a.total; });
+  var work = rated.filter(function (x) { return x.ratio < FEEDBACK_GOOD; })
+    .sort(function (a, b) { return a.ratio - b.ratio || b.total - a.total; });
+  var celebrate = good.slice(0, FEEDBACK_MAX).map(function (x) { return { title: x.area.name, text: x.area.good }; });
+  var improve = work.slice(0, FEEDBACK_MAX).map(function (x) { return { title: x.area.name, text: x.area.tip }; });
+  if (!celebrate.length) celebrate.push({ title: "Sticking with it", text: "You worked through the whole screener. That takes effort, well done." });
+  if (blanks >= FEEDBACK_BLANKS) improve.push({ title: "Have a go at every question", text: "If you are not sure, rule out the answers that can’t be right and choose the best one left. A guess is better than a blank." });
+  if (!improve.length) improve.push({ title: "Keep stretching yourself", text: "Nothing stood out to work on. Try harder problems with more than one step to keep growing." });
+  return { celebrate: celebrate, improve: improve };
+}
+
+/* Same feedback, worked out from a saved results row (used after a page reload) */
+function feedbackFromRow(row) {
+  var marks = {};
+  ITEM_IDS.forEach(function (id) { if (row[id] === 0 || row[id] === 1) marks[id] = row[id]; });
+  var blanks = 0;
+  try { JSON.parse(row.Answers || "[]").forEach(function (a) { if (!a.chosen) blanks++; }); } catch (e) { blanks = 0; }
+  return buildFeedback(marks, blanks);
 }
 
 </script>
 
 <script>
 (function () {
-  var STORE_KEY = "y8-numeracy-check-v1";
-  var state = { student: null, stage: 0, route: null, responses: {}, startedAt: null, submitted: false, row: null, submissionId: null };
-  var timerHandle = null;
+  var STORE_KEY = "y8-numeracy-check-v3";
+  var state = null, test = null, dir = "next", clockId = null, clockAt = 0;
+  var token = "";              // the login code lives only in memory, never on the device
+  var who = { name: "", cls: "" };
+  var preview = !CONFIG.FLOW_URL;
 
   function $(id) { return document.getElementById(id); }
-  function show(id) { ["screen-start", "screen-stage", "screen-done"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); }); window.scrollTo(0, 0); }
-  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
-  function load() { try { var s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
-  function clearStore() { try { localStorage.removeItem(STORE_KEY); } catch (e) {} }
+  function show(id) {
+    ["screen-start", "screen-confirm", "screen-stage", "screen-break", "screen-done"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); });
+    var testing = id === "screen-stage" || id === "screen-break";
+    if (id === "screen-break") { $(id).classList.remove("play"); void $(id).offsetWidth; $(id).classList.add("play"); }
+    $("brand").classList.toggle("hidden", testing);
+    document.querySelector("header").classList.toggle("hidden", !testing);
+    window.scrollTo(0, 0);
+  }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* Progress is kept on this device per student and round, so a closed page can carry on.
+     It holds answers and the student ID only: no name, no login code. */
+  function keyFor(id, round) { return String(id).trim().toUpperCase() + "|" + round; }
+  function readAll() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function writeAll(all) { try { localStorage.setItem(STORE_KEY, JSON.stringify(all)); } catch (e) {} }
+  function save() { if (!state) return; var all = readAll(); all[keyFor(state.studentId, state.round)] = state; writeAll(all); }
+  function loadSaved(id, round) { return readAll()[keyFor(id, round)] || null; }
+  function forget(id, round) { var all = readAll(); delete all[keyFor(id, round)]; writeAll(all); }
 
   document.title = CONFIG.TITLE;
   $("title").textContent = CONFIG.TITLE;
+  $("brand-title").textContent = CONFIG.TITLE;
+  document.querySelector("header").classList.add("hidden");
+  if (preview) $("preview-note").classList.remove("hidden");
 
-  /* ---------- timer ---------- */
-  function startTimer() {
-    $("timer").classList.remove("hidden");
-    clearInterval(timerHandle);
-    timerHandle = setInterval(tick, 1000);
-    tick();
-  }
-  function tick() {
-    var left = CONFIG.TIME_LIMIT_MINUTES * 60000 - (Date.now() - state.startedAt);
-    if (left <= 0) { clearInterval(timerHandle); $("timer").textContent = "Time is up"; timeUp(); return; }
-    var m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
-    $("timer").textContent = m + ":" + (s < 10 ? "0" : "") + s + " left";
-    $("timer").classList.toggle("low", left < 5 * 60000);
-  }
-  function timeUp() {
-    if (state.submitted) return;
-    if (state.stage === 1) { collect(); state.route = routeFor(stage1Score()); }
-    else if (state.stage === 2) { collect(); }
-    finish();
+  /* ---------- talking to the flow ---------- */
+  function callFlow(url, payload) {
+    return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data = null;
+          try { data = JSON.parse(text); if (typeof data === "string") data = JSON.parse(data); } catch (e) { data = null; }
+          if (!res.ok || !data) return { ok: false, reason: "http", message: "Something went wrong (error " + res.status + ")." };
+          return data;
+        });
+      });
   }
 
-  /* ---------- rendering ---------- */
-  function currentIds() { return state.stage === 1 ? STAGE1 : ROUTES[state.route]; }
+  /* Try again on a busy or failed connection. Several students often finish at the same moment, and the
+     workbook can briefly refuse a save while another is being written. Answers from the workbook itself
+     (wrong code, already done, screening closed) are never retried. Waits are a little random so a whole
+     class does not retry in step. A repeat send is safe: the workbook ignores a Submission ID it already has. */
+  var RETRY_WAITS = [2500, 6000, 12000, 20000];
+  function callFlowRetry(url, payload, onRetry) {
+    var attempt = 0;
+    function once() {
+      return callFlow(url, payload).then(function (r) {
+        if (r && r.ok === false && r.reason === "http" && attempt < RETRY_WAITS.length) return later(r);
+        return r;
+      }, function (err) {
+        if (attempt < RETRY_WAITS.length) return later(null);
+        throw err;
+      });
+    }
+    function later(r) {
+      var wait = RETRY_WAITS[attempt++] * (0.75 + Math.random() * 0.5);
+      if (onRetry) onRetry(attempt);
+      return new Promise(function (ok) { setTimeout(ok, wait); }).then(once);
+    }
+    return once();
+  }
 
-  function renderStage() {
-    var ids = currentIds();
-    $("stage-title").textContent = state.stage === 1 ? "Part 1" : "Part 2";
-    $("stage-lead").textContent = state.stage === 1
-      ? "Choose one answer for each question."
-      : "Well done on Part 1. Here are your Part 2 questions.";
-    $("btn-next").textContent = state.stage === 1 ? "Finish Part 1" : "Finish and send";
-    $("blank-note").classList.add("hidden");
-    $("blank-note").dataset.warned = "";
-    var offset = state.stage === 1 ? 0 : STAGE1.length;
-    var html = ids.map(function (id, j) {
-      var i = j + offset;
-      var it = ITEMS[id], saved = state.responses[id] || "";
-      var opts = seededShuffle(it.options, state.student.id + "|" + id);
-      var body = '<div class="opts" role="radiogroup" aria-label="Question ' + (i + 1) + ' options">' + opts.map(function (o) {
-        var chosen = saved === o;
-        return '<label class="opt' + (chosen ? " chosen" : "") + '"><input type="radio" name="' + id + '" value="' + esc(o) + '"' + (chosen ? " checked" : "") + '><span>' + esc(o) + '</span></label>';
-      }).join("") + "</div>";
-      return '<div class="card"><div class="q-num">Question ' + (i + 1) + '</div><div class="q-text">' + esc(it.text) + "</div>" + (it.html || "") + body + "</div>";
+  /* ---------- time on each question (never shown to the student) ----------
+     Time counts only while a question is on screen and the page is in view.
+     One visit counts for at most 5 minutes, so a student who walks away does not inflate the total. */
+  var VISIT_CAP_MS = 5 * 60000, pausedId = null;
+  function clockStop() {
+    if (clockId && state && !state.submitted) {
+      state.qms = state.qms || {};
+      state.qms[clockId] = (state.qms[clockId] || 0) + Math.min(VISIT_CAP_MS, Math.max(0, Date.now() - clockAt));
+    }
+    clockId = null;
+  }
+  function clockStart(id) { clockStop(); clockId = id; clockAt = Date.now(); }
+  function secsByQuestion() { var q = state.qms || {}, out = {}; Object.keys(q).forEach(function (k) { out[k] = q[k] / 1000; }); return out; }
+  function activeMs() { var q = state.qms || {}; return Object.keys(q).reduce(function (a, k) { return a + q[k]; }, 0); }
+  document.addEventListener("visibilitychange", function () {
+    if (!state || state.submitted) return;
+    if (document.hidden) { pausedId = clockId; clockStop(); save(); }
+    else if (pausedId && !$("screen-stage").classList.contains("hidden")) { clockStart(pausedId); pausedId = null; }
+  });
+
+  /* ---------- the current part ---------- */
+  function partIds() { return state.stage === 1 ? test.stage1 : test.routes[state.route]; }
+  function offset() { return state.stage === 1 ? 0 : STAGE1.length; }
+  function answered(id) { return !!state.responses[id]; }
+
+  function render() {
+    var ids = partIds(), id = ids[state.idx], it = test.items[id], n = offset() + state.idx + 1;
+    clockStart(id);
+    $("dots").innerHTML = ids.map(function (qid, k) {
+      var cls = "dot" + (answered(qid) ? " done" : "") + (k === state.idx ? " here" : "");
+      return '<button type="button" class="' + cls + '" data-k="' + k + '" aria-label="Question ' + (offset() + k + 1) +
+        (answered(qid) ? ", answered" : ", not answered") + '">' + (offset() + k + 1) + "</button>";
     }).join("");
-    $("questions").innerHTML = html;
-    Array.prototype.forEach.call($("questions").querySelectorAll("input"), function (el) {
+    var saved = state.responses[id] || "";
+    $("q-card").innerHTML =
+      '<div class="card-stripes" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      '<div class="q-head"><span class="q-num part' + state.stage + '">Question ' + n + '</span><span class="q-part">Part ' + state.stage +
+      " \u00b7 " + (state.idx + 1) + " of " + ids.length + "</span></div>" +
+      '<div class="q-text" id="q-text">' + esc(it.text) + "</div>" + (it.html || "") +
+      '<div class="opts" role="radiogroup" aria-labelledby="q-text">' + it.options.map(function (o) {
+        var chosen = saved === o;
+        return '<label class="opt' + (chosen ? " chosen" : "") + '"><input type="radio" name="answer" value="' + esc(o) + '"' +
+          (chosen ? " checked" : "") + "><span>" + esc(o) + "</span></label>";
+      }).join("") + "</div>";
+    Array.prototype.forEach.call($("q-card").querySelectorAll('input[name="answer"]'), function (el) {
       el.addEventListener("change", function () {
-        Array.prototype.forEach.call(document.getElementsByName(el.name), function (r) { r.parentNode.classList.toggle("chosen", r.checked); });
-        collect(); save(); updateProgress();
+        state.responses[id] = el.value;
+        Array.prototype.forEach.call($("q-card").querySelectorAll(".opt"), function (lab) {
+          lab.classList.toggle("chosen", lab.querySelector("input").checked);
+        });
+        var dot = $("dots").querySelector('[data-k="' + state.idx + '"]');
+        if (dot) dot.classList.add("done");
+        var lab = el.closest(".opt"); if (lab) { lab.classList.remove("just"); void lab.offsetWidth; lab.classList.add("just"); }
+        save(); updateProgress();
       });
     });
+    var card = $("q-card");
+    card.classList.remove("enter-next", "enter-back"); void card.offsetWidth; card.classList.add("enter-" + dir);
+    $("btn-back").disabled = state.idx === 0;
+    var last = state.idx === ids.length - 1;
+    $("btn-next").textContent = last ? (state.stage === 1 ? "Finish Part 1" : "Finish and send") : "Next";
+    if (!last) { $("blank-note").classList.add("hidden"); $("blank-note").dataset.warned = ""; }
     updateProgress();
+    save();
   }
 
-  function collect() {
-    currentIds().forEach(function (id) {
-      var els = document.getElementsByName(id);
-      if (!els.length) return;
-      var v = ""; Array.prototype.forEach.call(els, function (r) { if (r.checked) v = r.value; });
-      state.responses[id] = v;
-    });
+  function go(k) {
+    var to = Math.max(0, Math.min(partIds().length - 1, k));
+    dir = to < state.idx ? "back" : "next";
+    state.idx = to; render(); window.scrollTo(0, 0);
   }
+
+  /* Material ripple on buttons and answer options */
+  document.addEventListener("pointerdown", function (e) {
+    var host = e.target.closest("button, .opt");
+    if (!host || host.disabled) return;
+    var r = host.getBoundingClientRect(), size = Math.max(r.width, r.height);
+    var dotEl = document.createElement("span");
+    dotEl.className = "ripple";
+    dotEl.style.width = dotEl.style.height = size + "px";
+    dotEl.style.left = (e.clientX - r.left - size / 2) + "px";
+    dotEl.style.top = (e.clientY - r.top - size / 2) + "px";
+    host.appendChild(dotEl);
+    setTimeout(function () { if (dotEl.parentNode) dotEl.parentNode.removeChild(dotEl); }, 600);
+  });
+
+  $("dots").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-k]"); if (b) go(Number(b.dataset.k));
+  });
+  $("btn-back").addEventListener("click", function () { go(state.idx - 1); });
+  $("btn-next").addEventListener("click", function () {
+    var ids = partIds();
+    if (state.idx < ids.length - 1) { go(state.idx + 1); return; }
+    var blanks = [];
+    ids.forEach(function (qid, k) { if (!answered(qid)) blanks.push(k); });
+    var note = $("blank-note");
+    if (blanks.length && !note.dataset.warned) {
+      note.innerHTML = "You have not answered " + (blanks.length === 1 ? "question " : "questions ") +
+        blanks.map(function (k) { return '<button type="button" class="secondary" data-k="' + k + '">' + (offset() + k + 1) + "</button>"; }).join("") +
+        "<br>Tap a number to go back to it, or press <b>" + esc($("btn-next").textContent) + "</b> again to carry on.";
+      note.classList.remove("hidden"); note.dataset.warned = "1"; return;
+    }
+    note.classList.add("hidden"); note.dataset.warned = "";
+    if (state.stage === 1) {
+      state.route = routeFor(stage1Score());
+      clockStop(); state.stage = 2; state.idx = 0; state.onBreak = true; save();
+      show("screen-break");
+    } else { finish(); }
+  });
+  $("blank-note").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-k]"); if (b) { $("blank-note").dataset.warned = ""; go(Number(b.dataset.k)); }
+  });
+  $("btn-part2").addEventListener("click", function () { state.onBreak = false; dir = "next"; save(); render(); show("screen-stage"); });
 
   function updateProgress() {
-    var total = STAGE1.length + (state.route ? ROUTES[state.route].length : 16);
-    var done = Object.keys(state.responses).filter(function (k) { return state.responses[k] !== ""; }).length;
+    var total = STAGE1.length + (state.route ? ROUTES[state.route].length : 14);
+    var done = Object.keys(state.responses).filter(function (k) { return state.responses[k]; }).length;
     $("progress").style.width = Math.min(100, Math.round(done / total * 100)) + "%";
   }
 
-  function stage1Score() { return STAGE1.reduce(function (a, id) { return a + markItem(id, state.responses[id]); }, 0); }
+  function stage1Score() { return STAGE1.reduce(function (a, id) { return a + markItem(test.items[id], state.responses[id]); }, 0); }
 
-  /* ---------- flow ---------- */
+  /* ---------- sign in ---------- */
+  function startErr(msg) { $("start-err").textContent = msg; $("start-err").classList.remove("hidden"); }
+
+  var pending = null;   // who the workbook says the code belongs to, until the student confirms
+
   $("btn-start").addEventListener("click", function () {
-    var name = $("s-name").value.trim(), sid = $("s-id").value.trim(), cls = $("s-class").value.trim();
-    if (!name || !sid) { $("start-err").classList.remove("hidden"); return; }
-    state = { student: { name: name, id: sid, cls: cls }, stage: 1, route: null, responses: {}, startedAt: Date.now(), submitted: false, row: null,
-              submissionId: sid.replace(/[^\w-]/g, "") + "-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e6).toString(36) };
-    save(); renderStage(); show("screen-stage"); startTimer();
-  });
-
-  $("btn-next").addEventListener("click", function () {
-    collect();
-    var blanks = currentIds().filter(function (id) { return !state.responses[id]; }).length;
-    var note = $("blank-note");
-    if (blanks > 0 && !note.dataset.warned) {
-      note.textContent = "You have left " + blanks + (blanks === 1 ? " question" : " questions") + " blank. That is fine if you cannot do them. Press the button again to carry on.";
-      note.classList.remove("hidden"); note.dataset.warned = "1"; return;
+    var typedName = $("s-name").value.trim(), code = $("s-code").value.trim();
+    $("start-err").classList.add("hidden");
+    // The typed name is only a prompt for the student: it is not checked or sent
+    if (!typedName || (!code && !preview)) { startErr("Please type your name and your login code."); return; }
+    if (preview) {
+      pending = { studentId: "PREVIEW-" + typedName.toUpperCase().replace(/[^A-Z0-9]/g, ""), name: typedName, cls: "Preview", round: CONFIG.ROUND, code: "" };
+      confirmWho(); return;
     }
-    if (state.stage === 1) {
-      state.route = routeFor(stage1Score());
-      state.stage = 2; save(); renderStage(); window.scrollTo(0, 0);
-    } else { finish(); }
+    $("btn-start").disabled = true; $("btn-start").textContent = "Checking\u2026";
+    callFlowRetry(CONFIG.LOGIN_URL || CONFIG.FLOW_URL, { action: "login", token: code }, function () { $("btn-start").textContent = "Busy, trying again\u2026"; })
+      .then(function (r) {
+        $("btn-start").disabled = false; $("btn-start").textContent = "Sign in";
+        if (!r.ok) { startErr(r.message || "Sign-in did not work. Check your login code."); return; }
+        pending = { studentId: r.studentId, name: r.name || "", cls: r.cls || "", round: r.round, code: code };
+        confirmWho();
+      })
+      .catch(function () {
+        $("btn-start").disabled = false; $("btn-start").textContent = "Sign in";
+        startErr("Could not reach the screener. Check your internet connection and try again.");
+      });
   });
 
+  function confirmWho() {
+    $("c-name").textContent = pending.name || "(no name on the Roster)";
+    $("c-class").textContent = pending.cls ? "Class " + pending.cls : "";
+    show("screen-confirm");
+  }
+  $("btn-yes").addEventListener("click", function () {
+    if (!pending) return;
+    token = pending.code;
+    var p2 = pending; pending = null;
+    begin(p2.studentId, p2.round, { name: p2.name, cls: p2.cls });
+  });
+  $("btn-no").addEventListener("click", function () {
+    pending = null; $("s-code").value = "";
+    show("screen-start");
+    startErr("Check your login code with your teacher, then try again.");
+  });
+
+  function begin(sid, round, person) {
+    who = person;
+    $("who").textContent = person.name ? person.name + (person.cls ? " \u00b7 " + person.cls : "") : "";
+    $("who").classList.toggle("hidden", !person.name);
+    $("s-code").value = "";
+    test = buildTest(sid, round);
+    var saved = loadSaved(sid, round);
+    if (saved) {
+      state = saved;
+      if (state.submitted && state.row) { show("screen-done"); send(); return; }
+      if (state.submitted) return;
+      if (state.onBreak) { show("screen-break"); return; }
+      render(); show("screen-stage"); return;
+    }
+    state = { studentId: sid, round: round, stage: 1, idx: 0, route: null, responses: {}, startedAt: Date.now(),
+              submitted: false, onBreak: false, row: null,
+              submissionId: sid.replace(/[^\w-]/g, "") + "-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e6).toString(36) };
+    save(); render(); show("screen-stage");
+  }
+
+  /* ---------- finish and send ---------- */
   function finish() {
     if (state.submitted) return;
-    clearInterval(timerHandle);
+    clockStop();
     var route = state.route || "Low";
-    var r = scoreAttempt(state.responses, route);
+    var r = scoreAttempt(state.responses, route, test.items);
+    // Name and class are filled in by the workbook from the Roster
     state.row = buildRow({
-      submissionId: state.submissionId, submittedAt: new Date(), studentId: state.student.id,
-      name: state.student.name, cls: state.student.cls,
-      minutes: Math.round((Date.now() - state.startedAt) / 6000) / 10
-    }, r, state.responses);
-    state.submitted = true; state.stage = 3; save();
-    $("timer").classList.add("hidden");
+      submissionId: state.submissionId, submittedAt: new Date(), round: state.round, studentId: state.studentId,
+      // time actually spent on questions, not counting the break or time away from the page
+      name: "", cls: "", minutes: Math.round(activeMs() / 6000) / 10, secs: secsByQuestion()
+    }, r, state.responses, test.items, test.stage1.concat(test.routes[route]));
+    state.submitted = true; save();
     show("screen-done"); send();
   }
 
+  function showFeedback() {
+    var box = $("feedback");
+    if (!state || !state.row) { box.classList.add("hidden"); return; }
+    var f = feedbackFromRow(state.row);
+    var li = function (x) { return "<li><b>" + esc(x.title) + "</b><span>" + esc(x.text) + "</span></li>"; };
+    $("fb-celebrate").innerHTML = f.celebrate.map(li).join("");
+    $("fb-improve").innerHTML = f.improve.map(li).join("");
+    box.classList.remove("hidden");
+    // restart the fade-in each time
+    [].forEach.call(box.querySelectorAll(".fb"), function (el) { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });
+  }
+  function hideFeedback() { $("feedback").classList.add("hidden"); }
+
+  function showTick(done) {
+    var t = $("done-tick"); t.classList.toggle("wait", !done);
+    var sec = $("screen-done"); sec.classList.remove("play"); void sec.offsetWidth; if (done) sec.classList.add("play");
+  }
   function sent() {
+    showTick(true);
     $("done-msg").innerHTML = '<span class="ok">Your answers have been sent.</span> Thank you. You can close this page now.';
     $("btn-retry").classList.add("hidden"); $("btn-download").classList.add("hidden");
-    clearStore();
+    forget(state.studentId, state.round);
   }
   function failed(msg) {
+    showTick(false);
     $("done-msg").textContent = msg + " Tell your teacher, then try again or download your answers to give to them.";
     $("btn-retry").classList.remove("hidden"); $("btn-download").classList.remove("hidden");
   }
 
   function send() {
-    $("done-msg").textContent = "Sending your answers…";
+    $("done-msg").textContent = "Sending your answers\u2026";
+    showFeedback();
+    if (preview) { failed("Preview mode: answers are not saved."); return; }
     $("btn-retry").disabled = true;
-    if (!CONFIG.FLOW_URL) { $("btn-retry").disabled = false; failed("This check is not connected to a results sheet yet."); return; }
-    fetch(CONFIG.FLOW_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: CONFIG.SHARED_KEY, row: state.row })
-    }).then(function (res) {
-      $("btn-retry").disabled = false;
-      if (res.ok) { sent(); } else { failed("Your answers could not be saved (error " + res.status + ")."); }
-    }).catch(function () {
-      $("btn-retry").disabled = false;
-      failed("Your answers could not be sent. Check your internet connection.");
-    });
+    callFlowRetry(CONFIG.FLOW_URL, { action: "submit", token: token, row: state.row },
+      function () { $("done-msg").textContent = "Still sending your answers. The network is busy, so trying again\u2026"; })
+      .then(function (r) {
+        $("btn-retry").disabled = false;
+        if (r.ok) { sent(); return; }
+        if (r.reason === "done") {
+          $("done-msg").textContent = r.message; hideFeedback(); forget(state.studentId, state.round); return;
+        }
+        failed(r.message || "Your answers could not be saved.");
+      })
+      .catch(function () {
+        $("btn-retry").disabled = false;
+        failed("Your answers could not be sent. Check your internet connection.");
+      });
   }
 
   $("btn-retry").addEventListener("click", send);
@@ -533,23 +1337,11 @@ function buildRow(info, r, responses) {
       var blob = new Blob([JSON.stringify({ row: state.row }, null, 2)], { type: "application/json" });
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "numeracy-check-" + (state.student.id || "answers").replace(/[^\w-]/g, "") + ".json";
+      a.download = "numeracy-screener-" + String(state.studentId).replace(/[^\w-]/g, "") + ".json";
       document.body.appendChild(a); a.click(); a.remove();
+      forget(state.studentId, state.round);
     } catch (e) { failed("Download is not available here."); }
   });
-
-  $("btn-resume").addEventListener("click", function () {
-    var saved = load(); if (!saved) return;
-    state = saved;
-    if (state.stage === 3 && state.row) { show("screen-done"); send(); return; }
-    renderStage(); show("screen-stage"); startTimer();
-  });
-
-  // Offer to resume an unfinished check on this device
-  var prior = load();
-  if (prior && prior.student && (prior.stage === 1 || prior.stage === 2 || (prior.stage === 3 && prior.row))) {
-    $("resume-note").classList.remove("hidden");
-  }
 })();
 </script>
 </body>
